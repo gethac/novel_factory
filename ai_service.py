@@ -1,12 +1,23 @@
 import requests
 import json
-from typing import Optional, Dict, Any
+import time
+from typing import Optional, Dict, Any, Tuple
 from config import Config
-from models import db, AIConfig, GenerationLog
+from models import db, AIConfig, GenerationLog, TokenUsage, Novel
 
 
 class AIService:
     """AI服务类，负责调用大模型API"""
+
+    # 模型价格表（每1000 tokens的价格，美元）
+    MODEL_PRICING = {
+        'gpt-4': {'prompt': 0.03, 'completion': 0.06},
+        'gpt-4-turbo': {'prompt': 0.01, 'completion': 0.03},
+        'gpt-3.5-turbo': {'prompt': 0.0005, 'completion': 0.0015},
+        'claude-3-opus': {'prompt': 0.015, 'completion': 0.075},
+        'claude-3-sonnet': {'prompt': 0.003, 'completion': 0.015},
+        'default': {'prompt': 0.01, 'completion': 0.03}  # 默认价格
+    }
 
     def __init__(self):
         self.api_base = Config.AI_API_BASE
@@ -22,8 +33,19 @@ class AIService:
             self.api_key = active_config.api_key
             self.model = active_config.model_name
 
-    def _call_api(self, messages: list, temperature: float = 0.7, max_tokens: int = 4000) -> Optional[str]:
-        """调用AI API"""
+    def _calculate_cost(self, prompt_tokens: int, completion_tokens: int, model: str) -> float:
+        """计算API调用费用"""
+        pricing = self.MODEL_PRICING.get(model, self.MODEL_PRICING['default'])
+        prompt_cost = (prompt_tokens / 1000) * pricing['prompt']
+        completion_cost = (completion_tokens / 1000) * pricing['completion']
+        return prompt_cost + completion_cost
+
+    def _call_api(self, messages: list, temperature: float = 0.7, max_tokens: int = 4000,
+                  novel_id: int = None, operation: str = None, stage: str = None,
+                  chapter_number: int = None) -> Tuple[Optional[str], Optional[Dict]]:
+        """调用AI API并记录Token使用"""
+        start_time = time.time()
+
         try:
             headers = {
                 'Content-Type': 'application/json',
@@ -44,16 +66,83 @@ class AIService:
                 timeout=120
             )
 
+            duration = time.time() - start_time
+
             if response.status_code == 200:
                 result = response.json()
-                return result['choices'][0]['message']['content']
+                content = result['choices'][0]['message']['content']
+
+                # 提取Token使用信息
+                usage = result.get('usage', {})
+                prompt_tokens = usage.get('prompt_tokens', 0)
+                completion_tokens = usage.get('completion_tokens', 0)
+                total_tokens = usage.get('total_tokens', 0)
+
+                # 计算费用
+                cost = self._calculate_cost(prompt_tokens, completion_tokens, self.model)
+
+                # 记录Token使用
+                if novel_id:
+                    self._record_token_usage(
+                        novel_id=novel_id,
+                        stage=stage,
+                        operation=operation,
+                        chapter_number=chapter_number,
+                        prompt_tokens=prompt_tokens,
+                        completion_tokens=completion_tokens,
+                        total_tokens=total_tokens,
+                        cost=cost,
+                        duration=duration
+                    )
+
+                usage_info = {
+                    'prompt_tokens': prompt_tokens,
+                    'completion_tokens': completion_tokens,
+                    'total_tokens': total_tokens,
+                    'cost': cost,
+                    'duration': duration
+                }
+
+                return content, usage_info
             else:
                 print(f"API调用失败: {response.status_code} - {response.text}")
-                return None
+                return None, None
 
         except Exception as e:
             print(f"API调用异常: {str(e)}")
-            return None
+            return None, None
+
+    def _record_token_usage(self, novel_id: int, stage: str, operation: str,
+                           prompt_tokens: int, completion_tokens: int, total_tokens: int,
+                           cost: float, duration: float, chapter_number: int = None):
+        """记录Token使用到数据库"""
+        try:
+            token_usage = TokenUsage(
+                novel_id=novel_id,
+                stage=stage,
+                operation=operation,
+                chapter_number=chapter_number,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens,
+                cost=cost,
+                model_name=self.model,
+                duration=duration
+            )
+            db.session.add(token_usage)
+
+            # 更新小说的总Token统计
+            novel = Novel.query.get(novel_id)
+            if novel:
+                novel.total_tokens = (novel.total_tokens or 0) + total_tokens
+                novel.prompt_tokens = (novel.prompt_tokens or 0) + prompt_tokens
+                novel.completion_tokens = (novel.completion_tokens or 0) + completion_tokens
+                novel.total_cost = (novel.total_cost or 0.0) + cost
+
+            db.session.commit()
+        except Exception as e:
+            print(f"记录Token使用失败: {str(e)}")
+            db.session.rollback()
 
     def generate_settings(self, theme: str, background: str, target_words: int, target_chapters: int, novel_id: int) -> Optional[str]:
         """生成小说设定"""
@@ -82,10 +171,17 @@ class AIService:
             {'role': 'user', 'content': prompt}
         ]
 
-        result = self._call_api(messages, temperature=0.8, max_tokens=3000)
+        result, usage = self._call_api(
+            messages,
+            temperature=0.8,
+            max_tokens=3000,
+            novel_id=novel_id,
+            operation='generate_settings',
+            stage='settings'
+        )
 
         if result:
-            self._log(novel_id, 'settings', '小说设定生成成功')
+            self._log(novel_id, 'settings', f'小说设定生成成功 (Tokens: {usage["total_tokens"]}, 费用: ${usage["cost"]:.4f})')
         else:
             self._log(novel_id, 'settings', '小说设定生成失败', 'error')
 

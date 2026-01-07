@@ -25,6 +25,12 @@ class Novel(db.Model):
     outline = db.Column(db.Text)  # 大纲
     outline_check = db.Column(db.Text)  # 大纲检查结果
 
+    # Token消耗统计
+    total_tokens = db.Column(db.Integer, default=0)  # 总Token消耗
+    prompt_tokens = db.Column(db.Integer, default=0)  # 输入Token
+    completion_tokens = db.Column(db.Integer, default=0)  # 输出Token
+    total_cost = db.Column(db.Float, default=0.0)  # 总费用（美元）
+
     # 时间戳
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -33,6 +39,7 @@ class Novel(db.Model):
     # 关联
     chapters = db.relationship('Chapter', backref='novel', lazy='dynamic', cascade='all, delete-orphan')
     logs = db.relationship('GenerationLog', backref='novel', lazy='dynamic', cascade='all, delete-orphan')
+    token_usages = db.relationship('TokenUsage', backref='novel', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self):
         return {
@@ -48,6 +55,10 @@ class Novel(db.Model):
             'settings_check': self.settings_check,
             'outline': self.outline,
             'outline_check': self.outline_check,
+            'total_tokens': self.total_tokens,
+            'prompt_tokens': self.prompt_tokens,
+            'completion_tokens': self.completion_tokens,
+            'total_cost': self.total_cost,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
@@ -138,4 +149,46 @@ class AIConfig(db.Model):
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class TokenUsage(db.Model):
+    """Token使用记录表"""
+    __tablename__ = 'token_usages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    novel_id = db.Column(db.Integer, db.ForeignKey('novels.id'), nullable=False)
+    stage = db.Column(db.String(50))  # settings, outline, detailed_outline, content, check
+    operation = db.Column(db.String(100))  # 具体操作：generate_settings, check_settings等
+    chapter_number = db.Column(db.Integer)  # 章节号（如果适用）
+
+    # Token统计
+    prompt_tokens = db.Column(db.Integer, default=0)
+    completion_tokens = db.Column(db.Integer, default=0)
+    total_tokens = db.Column(db.Integer, default=0)
+
+    # 费用统计
+    cost = db.Column(db.Float, default=0.0)  # 本次调用费用
+
+    # 模型信息
+    model_name = db.Column(db.String(100))
+
+    # 时间信息
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    duration = db.Column(db.Float)  # 调用耗时（秒）
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'novel_id': self.novel_id,
+            'stage': self.stage,
+            'operation': self.operation,
+            'chapter_number': self.chapter_number,
+            'prompt_tokens': self.prompt_tokens,
+            'completion_tokens': self.completion_tokens,
+            'total_tokens': self.total_tokens,
+            'cost': self.cost,
+            'model_name': self.model_name,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'duration': self.duration
         }

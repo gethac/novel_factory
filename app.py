@@ -1,8 +1,9 @@
 import threading
 from flask import Flask, request, jsonify, send_file, render_template
 from flask_cors import CORS
-from datetime import datetime
-from models import db, Novel, Chapter, GenerationLog, AIConfig
+from datetime import datetime, timedelta
+from sqlalchemy import func
+from models import db, Novel, Chapter, GenerationLog, AIConfig, TokenUsage
 from novel_generator import NovelGenerator
 from exporter import NovelExporter
 from config import Config
@@ -235,11 +236,159 @@ def get_stats():
     generating_novels = Novel.query.filter_by(status='generating').count()
     failed_novels = Novel.query.filter_by(status='failed').count()
 
+    # Token统计
+    total_tokens = db.session.query(func.sum(Novel.total_tokens)).scalar() or 0
+    total_cost = db.session.query(func.sum(Novel.total_cost)).scalar() or 0.0
+
     return jsonify({
         'total_novels': total_novels,
         'completed_novels': completed_novels,
         'generating_novels': generating_novels,
-        'failed_novels': failed_novels
+        'failed_novels': failed_novels,
+        'total_tokens': total_tokens,
+        'total_cost': total_cost
+    })
+
+
+@app.route('/api/token-stats', methods=['GET'])
+def get_token_stats():
+    """获取Token使用统计"""
+    # 获取查询参数
+    days = request.args.get('days', 7, type=int)
+    novel_id = request.args.get('novel_id', type=int)
+
+    # 基础查询
+    query = TokenUsage.query
+
+    # 按小说筛选
+    if novel_id:
+        query = query.filter_by(novel_id=novel_id)
+
+    # 按时间筛选
+    if days > 0:
+        start_date = datetime.utcnow() - timedelta(days=days)
+        query = query.filter(TokenUsage.created_at >= start_date)
+
+    # 获取所有记录
+    usages = query.order_by(TokenUsage.created_at.desc()).all()
+
+    # 按阶段统计
+    stage_stats = db.session.query(
+        TokenUsage.stage,
+        func.sum(TokenUsage.total_tokens).label('total_tokens'),
+        func.sum(TokenUsage.cost).label('total_cost'),
+        func.count(TokenUsage.id).label('count')
+    ).group_by(TokenUsage.stage)
+
+    if novel_id:
+        stage_stats = stage_stats.filter_by(novel_id=novel_id)
+    if days > 0:
+        start_date = datetime.utcnow() - timedelta(days=days)
+        stage_stats = stage_stats.filter(TokenUsage.created_at >= start_date)
+
+    stage_stats = stage_stats.all()
+
+    # 按日期统计
+    daily_stats = db.session.query(
+        func.date(TokenUsage.created_at).label('date'),
+        func.sum(TokenUsage.total_tokens).label('total_tokens'),
+        func.sum(TokenUsage.cost).label('total_cost')
+    ).group_by(func.date(TokenUsage.created_at))
+
+    if novel_id:
+        daily_stats = daily_stats.filter_by(novel_id=novel_id)
+    if days > 0:
+        start_date = datetime.utcnow() - timedelta(days=days)
+        daily_stats = daily_stats.filter(TokenUsage.created_at >= start_date)
+
+    daily_stats = daily_stats.order_by(func.date(TokenUsage.created_at)).all()
+
+    return jsonify({
+        'usages': [usage.to_dict() for usage in usages],
+        'stage_stats': [
+            {
+                'stage': stat.stage,
+                'total_tokens': stat.total_tokens,
+                'total_cost': float(stat.total_cost),
+                'count': stat.count
+            }
+            for stat in stage_stats
+        ],
+        'daily_stats': [
+            {
+                'date': stat.date.isoformat(),
+                'total_tokens': stat.total_tokens,
+                'total_cost': float(stat.total_cost)
+            }
+            for stat in daily_stats
+        ]
+    })
+
+
+@app.route('/api/novels/<int:novel_id>/token-stats', methods=['GET'])
+def get_novel_token_stats(novel_id):
+    """获取单个小说的Token统计"""
+    novel = Novel.query.get_or_404(novel_id)
+
+    # 按阶段统计
+    stage_stats = db.session.query(
+        TokenUsage.stage,
+        func.sum(TokenUsage.total_tokens).label('total_tokens'),
+        func.sum(TokenUsage.prompt_tokens).label('prompt_tokens'),
+        func.sum(TokenUsage.completion_tokens).label('completion_tokens'),
+        func.sum(TokenUsage.cost).label('total_cost'),
+        func.count(TokenUsage.id).label('count'),
+        func.avg(TokenUsage.duration).label('avg_duration')
+    ).filter_by(novel_id=novel_id).group_by(TokenUsage.stage).all()
+
+    # 按章节统计
+    chapter_stats = db.session.query(
+        TokenUsage.chapter_number,
+        func.sum(TokenUsage.total_tokens).label('total_tokens'),
+        func.sum(TokenUsage.cost).label('total_cost')
+    ).filter_by(novel_id=novel_id).filter(
+        TokenUsage.chapter_number.isnot(None)
+    ).group_by(TokenUsage.chapter_number).order_by(TokenUsage.chapter_number).all()
+
+    # 按操作类型统计
+    operation_stats = db.session.query(
+        TokenUsage.operation,
+        func.sum(TokenUsage.total_tokens).label('total_tokens'),
+        func.sum(TokenUsage.cost).label('total_cost'),
+        func.count(TokenUsage.id).label('count')
+    ).filter_by(novel_id=novel_id).group_by(TokenUsage.operation).all()
+
+    return jsonify({
+        'novel': novel.to_dict(),
+        'stage_stats': [
+            {
+                'stage': stat.stage,
+                'total_tokens': stat.total_tokens,
+                'prompt_tokens': stat.prompt_tokens,
+                'completion_tokens': stat.completion_tokens,
+                'total_cost': float(stat.total_cost),
+                'count': stat.count,
+                'avg_duration': float(stat.avg_duration) if stat.avg_duration else 0
+            }
+            for stat in stage_stats
+        ],
+        'chapter_stats': [
+            {
+                'chapter_number': stat.chapter_number,
+                'total_tokens': stat.total_tokens,
+                'total_cost': float(stat.total_cost)
+            }
+            for stat in chapter_stats
+        ],
+        'operation_stats': [
+            {
+                'operation': stat.operation,
+                'total_tokens': stat.total_tokens,
+                'total_cost': float(stat.total_cost),
+                'count': stat.count
+            }
+            for stat in operation_stats
+        ]
     })
 
 
