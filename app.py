@@ -316,7 +316,7 @@ def get_token_stats():
         ],
         'daily_stats': [
             {
-                'date': stat.date.isoformat(),
+                'date': str(stat.date) if stat.date else '',
                 'total_tokens': stat.total_tokens,
                 'total_cost': float(stat.total_cost)
             }
