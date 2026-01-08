@@ -367,11 +367,11 @@
         </div>
 
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('dashboard')">仪表盘</button>
-            <button class="nav-tab" onclick="switchTab('create')">创建小说</button>
-            <button class="nav-tab" onclick="switchTab('novels')">小说列表</button>
-            <button class="nav-tab" onclick="switchTab('tokens')">Token统计</button>
-            <button class="nav-tab" onclick="switchTab('settings')">AI配置</button>
+            <button class="nav-tab active" onclick="switchTab('dashboard', event)">仪表盘</button>
+            <button class="nav-tab" onclick="switchTab('create', event)">创建小说</button>
+            <button class="nav-tab" onclick="switchTab('novels', event)">小说列表</button>
+            <button class="nav-tab" onclick="switchTab('tokens', event)">Token统计</button>
+            <button class="nav-tab" onclick="switchTab('settings', event)">AI配置</button>
         </div>
 
         <!-- 仪表盘 -->
@@ -569,11 +569,16 @@
         const API_BASE = 'http://localhost:5000/api';
 
         // 切换标签页
-        function switchTab(tabName) {
+        function switchTab(tabName, event) {
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-            event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // 如果没有event，通过tabName找到对应的按钮
+                document.querySelector(`[onclick*="${tabName}"]`).classList.add('active');
+            }
             document.getElementById(tabName).classList.add('active');
 
             if (tabName === 'dashboard') {
@@ -1027,7 +1032,10 @@
 
         // 自动刷新生成中的小说状态
         setInterval(() => {
-            const activeTab = document.querySelector('.tab-content.active').id;
+            const activeTabElement = document.querySelector('.tab-content.active');
+            if (!activeTabElement) return;
+
+            const activeTab = activeTabElement.id;
             if (activeTab === 'dashboard') {
                 loadStats();
                 loadRecentNovels();
