@@ -23,15 +23,19 @@ class AIService:
         self.api_base = Config.AI_API_BASE
         self.api_key = Config.AI_API_KEY
         self.model = Config.AI_MODEL
-        self._load_active_config()
+        # 延迟加载配置，避免在应用上下文外访问数据库
 
     def _load_active_config(self):
         """加载激活的AI配置"""
-        active_config = AIConfig.query.filter_by(is_active=True).first()
-        if active_config:
-            self.api_base = active_config.api_base
-            self.api_key = active_config.api_key
-            self.model = active_config.model_name
+        try:
+            active_config = AIConfig.query.filter_by(is_active=True).first()
+            if active_config:
+                self.api_base = active_config.api_base
+                self.api_key = active_config.api_key
+                self.model = active_config.model_name
+        except RuntimeError:
+            # 如果在应用上下文外调用，使用默认配置
+            pass
 
     def _calculate_cost(self, prompt_tokens: int, completion_tokens: int, model: str) -> float:
         """计算API调用费用"""
@@ -44,6 +48,9 @@ class AIService:
                   novel_id: int = None, operation: str = None, stage: str = None,
                   chapter_number: int = None) -> Tuple[Optional[str], Optional[Dict]]:
         """调用AI API并记录Token使用"""
+        # 尝试加载激活的配置
+        self._load_active_config()
+
         start_time = time.time()
 
         try:
