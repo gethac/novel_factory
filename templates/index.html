@@ -4,551 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI小说自动生产系统</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-
-        .header {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            padding: 40px;
-            text-align: center;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            color: #666;
-        }
-
-        .nav-tabs {
-            display: flex;
-            background: rgba(245, 245, 245, 0.5);
-            backdrop-filter: blur(10px);
-            padding: 10px;
-            gap: 10px;
-        }
-
-        .nav-tab {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            font-size: 16px;
-            transition: all 0.3s;
-            border-radius: 10px;
-            color: #666;
-        }
-
-        .nav-tab:hover {
-            background: rgba(255, 255, 255, 0.8);
-            transform: translateY(-2px);
-        }
-
-        .nav-tab.active {
-            background: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 30px;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(102, 126, 234, 0.1);
-            transition: all 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
-        }
-
-        .stat-card h3 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-card p {
-            font-size: 1.1em;
-            color: #666;
-        }
-
-        /* 进度可视化样式 */
-        .progress-container {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(102, 126, 234, 0.1);
-        }
-
-        .progress-steps {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            position: relative;
-        }
-
-        .progress-steps::before {
-            content: '';
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #e0e0e0;
-            z-index: 0;
-        }
-
-        .progress-step {
-            flex: 1;
-            text-align: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .progress-step-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: white;
-            border: 3px solid #e0e0e0;
-            margin: 0 auto 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .progress-step.active .progress-step-circle {
-            border-color: #667eea;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            animation: pulse 2s infinite;
-        }
-
-        .progress-step.completed .progress-step-circle {
-            border-color: #28a745;
-            background: #28a745;
-            color: white;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .progress-step-label {
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        .progress-step.active .progress-step-label {
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        .content-preview {
-            background: rgba(245, 247, 250, 0.5);
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid rgba(102, 126, 234, 0.1);
-        }
-
-        .content-preview h4 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-        }
-
-        .content-preview pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(102, 126, 234, 0.3);
-            border-radius: 50%;
-            border-top-color: #667eea;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid rgba(102, 126, 234, 0.2);
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.3s;
-            background: white;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-            font-family: inherit;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-
-        .btn-secondary:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .novel-list {
-            display: grid;
-            gap: 20px;
-        }
-
-        .novel-card {
-            border: 1px solid rgba(102, 126, 234, 0.15);
-            border-radius: 15px;
-            padding: 25px;
-            transition: all 0.3s;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .novel-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
-            transform: translateY(-3px);
-        }
-
-        .novel-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .novel-title {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .status-badge {
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
-
-        .status-pending {
-            background: #ffc107;
-            color: #000;
-        }
-
-        .status-generating {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .status-completed {
-            background: #28a745;
-            color: white;
-        }
-
-        .status-failed {
-            background: #dc3545;
-            color: white;
-        }
-
-        .novel-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-            color: #666;
-        }
-
-        .novel-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-            width: 90%;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-header h2 {
-            color: #333;
-        }
-
-        .close-btn {
-            font-size: 30px;
-            cursor: pointer;
-            color: #999;
-        }
-
-        .close-btn:hover {
-            color: #333;
-        }
-
-        .log-entry {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
-            background: #f8f9fa;
-            border-radius: 5px;
-        }
-
-        .log-entry.error {
-            border-left-color: #dc3545;
-        }
-
-        .log-entry.warning {
-            border-left-color: #ffc107;
-        }
-
-        .log-time {
-            font-size: 0.9em;
-            color: #999;
-        }
-
-        .config-list {
-            display: grid;
-            gap: 15px;
-        }
-
-        .config-card {
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .config-card.active {
-            border-color: #28a745;
-            background: #f0fff4;
-        }
-
-        .config-info h3 {
-            margin-bottom: 5px;
-        }
-
-        .config-info p {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-
-        .empty-state h3 {
-            font-size: 1.5em;
-            margin-bottom: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/components.css">
 </head>
 <body>
     <div class="container">
+        <!-- 头部 -->
         <div class="header">
             <h1>🤖 AI小说自动生产系统</h1>
             <p>完全自动化的小说创作工厂 - 从设定到成品，无需人工干预</p>
         </div>
 
+        <!-- 导航标签 -->
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('dashboard', event)">仪表盘</button>
-            <button class="nav-tab" onclick="switchTab('create', event)">创建小说</button>
-            <button class="nav-tab" onclick="switchTab('novels', event)">小说列表</button>
-            <button class="nav-tab" onclick="switchTab('tokens', event)">Token统计</button>
-            <button class="nav-tab" onclick="switchTab('settings', event)">AI配置</button>
+            <button class="nav-tab active" onclick="app.switchTab('dashboard', event)">仪表盘</button>
+            <button class="nav-tab" onclick="app.switchTab('create', event)">创建小说</button>
+            <button class="nav-tab" onclick="app.switchTab('novels', event)">小说列表</button>
+            <button class="nav-tab" onclick="app.switchTab('tokens', event)">Token统计</button>
+            <button class="nav-tab" onclick="app.switchTab('settings', event)">AI配置</button>
         </div>
 
         <!-- 仪表盘 -->
         <div id="dashboard" class="tab-content active">
-            <h2 style="margin-bottom: 20px;">系统概览</h2>
-            <div class="stats-grid" id="statsGrid">
+            <h2 style="margin-bottom: 20px; color: var(--text-color);">系统概览</h2>
+            <div class="stats-grid">
                 <div class="stat-card">
                     <h3 id="totalNovels">0</h3>
                     <p>总小说数</p>
@@ -575,14 +54,14 @@
                 </div>
             </div>
 
-            <h3 style="margin-bottom: 15px;">最近的小说</h3>
+            <h3 style="margin-bottom: 15px; color: var(--text-color);">最近的小说</h3>
             <div id="recentNovels" class="novel-list"></div>
         </div>
 
         <!-- 创建小说 -->
         <div id="create" class="tab-content">
-            <h2 style="margin-bottom: 20px;">创建新小说任务</h2>
-            <form id="createNovelForm">
+            <h2 style="margin-bottom: 20px; color: var(--text-color);">创建新小说任务</h2>
+            <form id="createNovelForm" style="max-width: 800px;">
                 <div class="form-group">
                     <label>小说主题 *</label>
                     <input type="text" id="theme" placeholder="例如：都市修仙、科幻冒险、古代言情等" required>
@@ -609,20 +88,20 @@
 
         <!-- 小说列表 -->
         <div id="novels" class="tab-content">
-            <h2 style="margin-bottom: 20px;">所有小说</h2>
+            <h2 style="margin-bottom: 20px; color: var(--text-color);">所有小说</h2>
             <div id="novelsList" class="novel-list"></div>
         </div>
 
         <!-- Token统计 -->
         <div id="tokens" class="tab-content">
-            <h2 style="margin-bottom: 20px;">💰 Token使用统计</h2>
+            <h2 style="margin-bottom: 20px; color: var(--text-color);">💰 Token使用统计</h2>
 
             <!-- 筛选器 -->
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <div style="background: rgba(245, 247, 250, 0.5); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid var(--border-color);">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                     <div class="form-group" style="margin: 0;">
                         <label>时间范围</label>
-                        <select id="tokenDays" onchange="loadTokenStats()" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
+                        <select id="tokenDays" onchange="tokenManager.loadTokenStats()">
                             <option value="7">最近7天</option>
                             <option value="30">最近30天</option>
                             <option value="90">最近90天</option>
@@ -631,7 +110,7 @@
                     </div>
                     <div class="form-group" style="margin: 0;">
                         <label>筛选小说</label>
-                        <select id="tokenNovelFilter" onchange="loadTokenStats()" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
+                        <select id="tokenNovelFilter" onchange="tokenManager.loadTokenStats()">
                             <option value="">全部小说</option>
                         </select>
                     </div>
@@ -640,48 +119,61 @@
 
             <!-- Token统计卡片 -->
             <div class="stats-grid" style="margin-bottom: 30px;">
-                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="stat-card">
                     <h3 id="tokenStatsTotal">0</h3>
                     <p>总Token</p>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="stat-card">
                     <h3 id="tokenStatsPrompt">0</h3>
                     <p>输入Token</p>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="stat-card">
                     <h3 id="tokenStatsCompletion">0</h3>
                     <p>输出Token</p>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="stat-card">
                     <h3 id="tokenStatsCost">$0.00</h3>
                     <p>总费用</p>
                 </div>
             </div>
 
             <!-- 按阶段统计 -->
-            <div style="background: white; border: 2px solid #ddd; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
-                <h3 style="margin-bottom: 15px;">📊 按阶段统计</h3>
+            <div class="token-stats-card">
+                <h4>📊 按阶段统计</h4>
                 <div id="stageStatsTable"></div>
             </div>
 
             <!-- 按日期趋势 -->
-            <div style="background: white; border: 2px solid #ddd; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
-                <h3 style="margin-bottom: 15px;">📈 使用趋势</h3>
+            <div class="token-stats-card">
+                <h4>📈 使用趋势</h4>
                 <div id="dailyStatsTable"></div>
             </div>
 
             <!-- 详细记录 -->
-            <div style="background: white; border: 2px solid #ddd; border-radius: 10px; padding: 20px;">
-                <h3 style="margin-bottom: 15px;">📝 详细记录</h3>
+            <div class="token-stats-card">
+                <h4>📝 详细记录</h4>
                 <div id="tokenUsagesList" style="max-height: 400px; overflow-y: auto;"></div>
             </div>
         </div>
 
         <!-- AI配置 -->
         <div id="settings" class="tab-content">
-            <h2 style="margin-bottom: 20px;">AI模型配置</h2>
-            <button class="btn btn-primary" onclick="showAddConfigModal()" style="margin-bottom: 20px;">添加新配置</button>
-            <div id="configsList" class="config-list"></div>
+            <h2 style="margin-bottom: 20px; color: var(--text-color);">AI模型配置</h2>
+            <button class="btn btn-primary" onclick="app.showModal('addConfigModal')" style="margin-bottom: 20px;">
+                添加新配置
+            </button>
+            <div id="configsList" class="novel-list"></div>
+        </div>
+    </div>
+
+    <!-- 进度监控模态框 -->
+    <div id="progressModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="progressModalTitle">生成进度</h2>
+                <span class="close-btn" onclick="app.closeModal('progressModal')">&times;</span>
+            </div>
+            <div id="progressModalContent"></div>
         </div>
     </div>
 
@@ -690,7 +182,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2 id="modalNovelTitle">小说详情</h2>
-                <span class="close-btn" onclick="closeModal('novelDetailModal')">&times;</span>
+                <span class="close-btn" onclick="app.closeModal('novelDetailModal')">&times;</span>
             </div>
             <div id="novelDetailContent"></div>
         </div>
@@ -701,7 +193,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>生成日志</h2>
-                <span class="close-btn" onclick="closeModal('logsModal')">&times;</span>
+                <span class="close-btn" onclick="app.closeModal('logsModal')">&times;</span>
             </div>
             <div id="logsContent"></div>
         </div>
@@ -712,12 +204,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>添加AI配置</h2>
-                <span class="close-btn" onclick="closeModal('addConfigModal')">&times;</span>
+                <span class="close-btn" onclick="app.closeModal('addConfigModal')">&times;</span>
             </div>
             <form id="addConfigForm">
                 <div class="form-group">
                     <label>配置名称 *</label>
-                    <input type="text" id="configName" required>
+                    <input type="text" id="configName" placeholder="例如：OpenAI GPT-4" required>
                 </div>
                 <div class="form-group">
                     <label>API地址 *</label>
@@ -736,484 +228,10 @@
         </div>
     </div>
 
-    <script>
-        const API_BASE = 'http://localhost:5000/api';
-
-        // 切换标签页
-        function switchTab(tabName, event) {
-            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-            if (event && event.target) {
-                event.target.classList.add('active');
-            } else {
-                // 如果没有event，通过tabName找到对应的按钮
-                document.querySelector(`[onclick*="${tabName}"]`).classList.add('active');
-            }
-            document.getElementById(tabName).classList.add('active');
-
-            if (tabName === 'dashboard') {
-                loadStats();
-                loadRecentNovels();
-            } else if (tabName === 'novels') {
-                loadNovels();
-            } else if (tabName === 'tokens') {
-                loadTokenStats();
-                loadNovelListForFilter();
-            } else if (tabName === 'settings') {
-                loadConfigs();
-            }
-        }
-
-        // 加载统计数据
-        async function loadStats() {
-            try {
-                const response = await fetch(`${API_BASE}/stats`);
-                const stats = await response.json();
-
-                document.getElementById('totalNovels').textContent = stats.total_novels;
-                document.getElementById('completedNovels').textContent = stats.completed_novels;
-                document.getElementById('generatingNovels').textContent = stats.generating_novels;
-                document.getElementById('failedNovels').textContent = stats.failed_novels;
-                document.getElementById('totalTokens').textContent = formatNumber(stats.total_tokens || 0);
-                document.getElementById('totalCost').textContent = `$${(stats.total_cost || 0).toFixed(2)}`;
-            } catch (error) {
-                console.error('加载统计数据失败:', error);
-            }
-        }
-
-        // 加载最近的小说
-        async function loadRecentNovels() {
-            try {
-                const response = await fetch(`${API_BASE}/novels`);
-                const novels = await response.json();
-
-                const container = document.getElementById('recentNovels');
-                container.innerHTML = novels.slice(0, 5).map(novel => createNovelCard(novel)).join('');
-            } catch (error) {
-                console.error('加载小说列表失败:', error);
-            }
-        }
-
-        // 加载所有小说
-        async function loadNovels() {
-            try {
-                const response = await fetch(`${API_BASE}/novels`);
-                const novels = await response.json();
-
-                const container = document.getElementById('novelsList');
-                if (novels.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><h3>还没有小说</h3><p>点击"创建小说"开始创作吧！</p></div>';
-                } else {
-                    container.innerHTML = novels.map(novel => createNovelCard(novel)).join('');
-                }
-            } catch (error) {
-                console.error('加载小说列表失败:', error);
-            }
-        }
-
-        // 创建小说卡片
-        function createNovelCard(novel) {
-            const statusClass = `status-${novel.status}`;
-            const statusText = {
-                'pending': '待生成',
-                'generating': '生成中',
-                'completed': '已完成',
-                'failed': '失败'
-            }[novel.status] || novel.status;
-
-            return `
-                <div class="novel-card">
-                    <div class="novel-card-header">
-                        <div class="novel-title">${novel.title || '未命名小说'}</div>
-                        <span class="status-badge ${statusClass}">${statusText}</span>
-                    </div>
-                    <div class="novel-info">
-                        <div>主题: ${novel.theme}</div>
-                        <div>目标字数: ${novel.target_words}</div>
-                        <div>章节数: ${novel.target_chapters}</div>
-                        <div>当前阶段: ${novel.current_stage || '-'}</div>
-                    </div>
-                    <div class="novel-actions">
-                        ${novel.status === 'pending' ? `<button class="btn btn-success" onclick="startGeneration(${novel.id})">开始生成</button>` : ''}
-                        ${novel.status === 'completed' ? `<button class="btn btn-primary" onclick="exportNovel(${novel.id})">导出TXT</button>` : ''}
-                        ${novel.status === 'completed' ? `<button class="btn btn-primary" onclick="downloadNovel(${novel.id})">下载</button>` : ''}
-                        <button class="btn btn-secondary" onclick="viewNovelDetail(${novel.id})">查看详情</button>
-                        <button class="btn btn-secondary" onclick="viewLogs(${novel.id})">查看日志</button>
-                        <button class="btn btn-danger" onclick="deleteNovel(${novel.id})">删除</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // 创建小说
-        document.getElementById('createNovelForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const data = {
-                theme: document.getElementById('theme').value,
-                background: document.getElementById('background').value,
-                target_words: parseInt(document.getElementById('targetWords').value),
-                target_chapters: parseInt(document.getElementById('targetChapters').value)
-            };
-
-            try {
-                const response = await fetch(`${API_BASE}/novels`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-
-                const novel = await response.json();
-                alert('小说任务创建成功！');
-
-                // 自动开始生成
-                await startGeneration(novel.id);
-
-                // 切换到小说列表
-                switchTab('novels');
-                document.querySelector('[onclick="switchTab(\'novels\')"]').click();
-            } catch (error) {
-                alert('创建失败: ' + error.message);
-            }
-        });
-
-        // 开始生成
-        async function startGeneration(novelId) {
-            try {
-                const response = await fetch(`${API_BASE}/novels/${novelId}/start`, {
-                    method: 'POST'
-                });
-                const result = await response.json();
-                alert('小说生成已启动！这可能需要一些时间，请稍后查看进度。');
-                loadNovels();
-                loadStats();
-            } catch (error) {
-                alert('启动失败: ' + error.message);
-            }
-        }
-
-        // 导出小说
-        async function exportNovel(novelId) {
-            try {
-                const response = await fetch(`${API_BASE}/novels/${novelId}/export`, {
-                    method: 'POST'
-                });
-                const result = await response.json();
-                alert('导出成功！');
-            } catch (error) {
-                alert('导出失败: ' + error.message);
-            }
-        }
-
-        // 下载小说
-        function downloadNovel(novelId) {
-            window.open(`${API_BASE}/novels/${novelId}/download`, '_blank');
-        }
-
-        // 查看小说详情
-        async function viewNovelDetail(novelId) {
-            try {
-                const response = await fetch(`${API_BASE}/novels/${novelId}`);
-                const novel = await response.json();
-
-                const chaptersResponse = await fetch(`${API_BASE}/novels/${novelId}/chapters`);
-                const chapters = await chaptersResponse.json();
-
-                document.getElementById('modalNovelTitle').textContent = novel.title || '未命名小说';
-                document.getElementById('novelDetailContent').innerHTML = `
-                    <h3>基本信息</h3>
-                    <p><strong>主题:</strong> ${novel.theme}</p>
-                    <p><strong>背景:</strong> ${novel.background}</p>
-                    <p><strong>目标字数:</strong> ${novel.target_words}</p>
-                    <p><strong>目标章节:</strong> ${novel.target_chapters}</p>
-                    <p><strong>状态:</strong> ${novel.status}</p>
-                    <p><strong>当前阶段:</strong> ${novel.current_stage || '-'}</p>
-
-                    ${novel.settings ? `<h3 style="margin-top: 20px;">小说设定</h3><pre style="white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 5px;">${novel.settings}</pre>` : ''}
-
-                    ${novel.outline ? `<h3 style="margin-top: 20px;">大纲</h3><pre style="white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 5px;">${novel.outline}</pre>` : ''}
-
-                    <h3 style="margin-top: 20px;">章节列表 (${chapters.length}章)</h3>
-                    ${chapters.map(ch => `
-                        <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px;">
-                            <strong>第${ch.chapter_number}章: ${ch.title}</strong>
-                            <p>状态: ${ch.status} | 字数: ${ch.word_count}</p>
-                        </div>
-                    `).join('')}
-                `;
-
-                document.getElementById('novelDetailModal').classList.add('active');
-            } catch (error) {
-                alert('加载详情失败: ' + error.message);
-            }
-        }
-
-        // 查看日志
-        async function viewLogs(novelId) {
-            try {
-                const response = await fetch(`${API_BASE}/novels/${novelId}/logs`);
-                const logs = await response.json();
-
-                document.getElementById('logsContent').innerHTML = logs.map(log => `
-                    <div class="log-entry ${log.level}">
-                        <div class="log-time">${new Date(log.created_at).toLocaleString()}</div>
-                        <div><strong>${log.stage}</strong>: ${log.message}</div>
-                    </div>
-                `).join('');
-
-                document.getElementById('logsModal').classList.add('active');
-            } catch (error) {
-                alert('加载日志失败: ' + error.message);
-            }
-        }
-
-        // 删除小说
-        async function deleteNovel(novelId) {
-            if (!confirm('确定要删除这部小说吗？')) return;
-
-            try {
-                await fetch(`${API_BASE}/novels/${novelId}`, {method: 'DELETE'});
-                alert('删除成功！');
-                loadNovels();
-                loadStats();
-            } catch (error) {
-                alert('删除失败: ' + error.message);
-            }
-        }
-
-        // 加载AI配置
-        async function loadConfigs() {
-            try {
-                const response = await fetch(`${API_BASE}/ai-configs`);
-                const configs = await response.json();
-
-                const container = document.getElementById('configsList');
-                if (configs.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><h3>还没有配置</h3><p>点击"添加新配置"开始设置AI模型</p></div>';
-                } else {
-                    container.innerHTML = configs.map(config => `
-                        <div class="config-card ${config.is_active ? 'active' : ''}">
-                            <div class="config-info">
-                                <h3>${config.name} ${config.is_active ? '✓ 当前使用' : ''}</h3>
-                                <p>API: ${config.api_base}</p>
-                                <p>模型: ${config.model_name}</p>
-                            </div>
-                            <div style="display: flex; gap: 10px;">
-                                ${!config.is_active ? `<button class="btn btn-success" onclick="activateConfig(${config.id})">激活</button>` : ''}
-                                <button class="btn btn-danger" onclick="deleteConfig(${config.id})">删除</button>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            } catch (error) {
-                console.error('加载配置失败:', error);
-            }
-        }
-
-        // 显示添加配置模态框
-        function showAddConfigModal() {
-            document.getElementById('addConfigModal').classList.add('active');
-        }
-
-        // 添加配置
-        document.getElementById('addConfigForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const data = {
-                name: document.getElementById('configName').value,
-                api_base: document.getElementById('configApiBase').value,
-                api_key: document.getElementById('configApiKey').value,
-                model_name: document.getElementById('configModelName').value,
-                is_active: false
-            };
-
-            try {
-                await fetch(`${API_BASE}/ai-configs`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-
-                alert('配置添加成功！');
-                closeModal('addConfigModal');
-                loadConfigs();
-                document.getElementById('addConfigForm').reset();
-            } catch (error) {
-                alert('添加失败: ' + error.message);
-            }
-        });
-
-        // 激活配置
-        async function activateConfig(configId) {
-            try {
-                await fetch(`${API_BASE}/ai-configs/${configId}/activate`, {method: 'POST'});
-                alert('配置已激活！');
-                loadConfigs();
-            } catch (error) {
-                alert('激活失败: ' + error.message);
-            }
-        }
-
-        // 删除配置
-        async function deleteConfig(configId) {
-            if (!confirm('确定要删除这个配置吗？')) return;
-
-            try {
-                await fetch(`${API_BASE}/ai-configs/${configId}`, {method: 'DELETE'});
-                alert('删除成功！');
-                loadConfigs();
-            } catch (error) {
-                alert('删除失败: ' + error.message);
-            }
-        }
-
-        // ==================== Token统计功能 ====================
-
-        // 格式化数字
-        function formatNumber(num) {
-            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
-
-        // 加载Token统计
-        async function loadTokenStats() {
-            try {
-                const days = document.getElementById('tokenDays').value;
-                const novelId = document.getElementById('tokenNovelFilter').value;
-
-                let url = `${API_BASE}/token-stats?days=${days}`;
-                if (novelId) url += `&novel_id=${novelId}`;
-
-                const response = await fetch(url);
-                const data = await response.json();
-
-                // 计算总计
-                let totalTokens = 0, totalPrompt = 0, totalCompletion = 0, totalCost = 0;
-                data.usages.forEach(u => {
-                    totalTokens += u.total_tokens || 0;
-                    totalPrompt += u.prompt_tokens || 0;
-                    totalCompletion += u.completion_tokens || 0;
-                    totalCost += u.cost || 0;
-                });
-
-                // 更新统计卡片
-                document.getElementById('tokenStatsTotal').textContent = formatNumber(totalTokens);
-                document.getElementById('tokenStatsPrompt').textContent = formatNumber(totalPrompt);
-                document.getElementById('tokenStatsCompletion').textContent = formatNumber(totalCompletion);
-                document.getElementById('tokenStatsCost').textContent = `$${totalCost.toFixed(2)}`;
-
-                // 按阶段统计表格
-                const stageNames = {
-                    'settings': '小说设定',
-                    'outline': '大纲生成',
-                    'detailed_outline': '细纲生成',
-                    'content': '内容生成',
-                    'check': '质量检查'
-                };
-
-                document.getElementById('stageStatsTable').innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f5f5f5;">
-                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">阶段</th>
-                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Token数</th>
-                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">费用</th>
-                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">调用次数</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.stage_stats.map(stat => `
-                                <tr>
-                                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${stageNames[stat.stage] || stat.stage}</td>
-                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${formatNumber(stat.total_tokens)}</td>
-                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">$${stat.total_cost.toFixed(4)}</td>
-                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${stat.count}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-
-                // 按日期趋势表格
-                document.getElementById('dailyStatsTable').innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f5f5f5;">
-                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">日期</th>
-                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Token数</th>
-                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">费用</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.daily_stats.map(stat => `
-                                <tr>
-                                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${stat.date}</td>
-                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${formatNumber(stat.total_tokens)}</td>
-                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">$${stat.total_cost.toFixed(4)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-
-                // 详细记录列表
-                document.getElementById('tokenUsagesList').innerHTML = data.usages.slice(0, 50).map(usage => `
-                    <div style="border-bottom: 1px solid #eee; padding: 10px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                            <strong>${stageNames[usage.stage] || usage.stage} - ${usage.operation}</strong>
-                            <span style="color: #666;">${new Date(usage.created_at).toLocaleString()}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.9em; color: #666;">
-                            <span>Token: ${formatNumber(usage.total_tokens)} (输入: ${formatNumber(usage.prompt_tokens)}, 输出: ${formatNumber(usage.completion_tokens)})</span>
-                            <span>费用: $${usage.cost.toFixed(4)} | 耗时: ${usage.duration ? usage.duration.toFixed(2) + 's' : '-'}</span>
-                        </div>
-                        ${usage.chapter_number ? `<div style="font-size: 0.9em; color: #999;">第${usage.chapter_number}章</div>` : ''}
-                    </div>
-                `).join('') || '<p style="text-align: center; color: #999; padding: 20px;">暂无数据</p>';
-
-            } catch (error) {
-                console.error('加载Token统计失败:', error);
-            }
-        }
-
-        // 加载小说列表用于筛选
-        async function loadNovelListForFilter() {
-            try {
-                const response = await fetch(`${API_BASE}/novels`);
-                const novels = await response.json();
-
-                const select = document.getElementById('tokenNovelFilter');
-                select.innerHTML = '<option value="">全部小说</option>' +
-                    novels.map(novel => `<option value="${novel.id}">${novel.title || '未命名小说'}</option>`).join('');
-            } catch (error) {
-                console.error('加载小说列表失败:', error);
-            }
-        }
-
-        // 关闭模态框
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        // 页面加载时初始化
-        window.addEventListener('load', () => {
-            loadStats();
-            loadRecentNovels();
-        });
-
-        // 自动刷新生成中的小说状态
-        setInterval(() => {
-            const activeTabElement = document.querySelector('.tab-content.active');
-            if (!activeTabElement) return;
-
-            const activeTab = activeTabElement.id;
-            if (activeTab === 'dashboard') {
-                loadStats();
-                loadRecentNovels();
-            } else if (activeTab === 'novels') {
-                loadNovels();
-            }
-        }, 5000);
-    </script>
+    <!-- 引入JavaScript模块 -->
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/novel.js"></script>
+    <script src="/static/js/modules.js"></script>
+    <script src="/static/js/app.js"></script>
 </body>
 </html>

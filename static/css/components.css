@@ -1,0 +1,510 @@
+/* 小说卡片样式 */
+.novel-list {
+    display: grid;
+    gap: 20px;
+}
+
+.novel-card {
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 25px;
+    transition: all 0.3s;
+    background: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.novel-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px);
+}
+
+.novel-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.novel-title {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.status-badge {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-generating {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-failed {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.novel-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+    color: var(--text-secondary);
+    font-size: 0.95em;
+}
+
+.novel-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.novel-actions .btn {
+    padding: 8px 20px;
+    font-size: 14px;
+}
+
+/* 进度条 */
+.progress-bar-container {
+    margin-top: 15px;
+}
+
+.progress-bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+}
+
+.progress-bar-label {
+    color: var(--text-secondary);
+}
+
+.progress-bar-stage {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.progress-bar {
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--primary-color);
+    transition: width 0.5s ease;
+    border-radius: 4px;
+}
+
+/* 进度步骤指示器 */
+.progress-container {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.progress-steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 0;
+}
+
+.progress-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.progress-step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #e0e0e0;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    transition: all 0.3s;
+    font-size: 0.9em;
+}
+
+.progress-step.active .progress-step-circle {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.progress-step.completed .progress-step-circle {
+    border-color: var(--success-color);
+    background: var(--success-color);
+    color: white;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+}
+
+.progress-step-label {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.progress-step.active .progress-step-label {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.progress-step.completed .progress-step-label {
+    color: var(--success-color);
+}
+
+/* 内容预览 */
+.content-preview {
+    background: rgba(245, 247, 250, 0.5);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+}
+
+.content-preview h4 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.content-preview pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+    line-height: 1.8;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.content-preview-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+/* 章节列表 */
+.chapter-list {
+    display: grid;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.chapter-item {
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 10px;
+    background: white;
+    transition: all 0.3s;
+}
+
+.chapter-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.chapter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.chapter-title {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.chapter-status {
+    font-size: 0.85em;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: #f0f0f0;
+    color: var(--text-secondary);
+}
+
+.chapter-info {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+}
+
+/* Token统计卡片 */
+.token-stats-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.token-stats-card h4 {
+    color: var(--text-color);
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.token-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+}
+
+.token-stat-item {
+    text-align: center;
+}
+
+.token-stat-value {
+    font-size: 1.8em;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.token-stat-label {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+/* 生成内容展示 */
+.generation-content {
+    margin-top: 30px;
+}
+
+.generation-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s;
+}
+
+.generation-section.active {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.generation-section.completed {
+    border-color: var(--success-color);
+    opacity: 0.9;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.section-header h4 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-check {
+    color: var(--success-color);
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.section-content {
+    color: var(--text-color);
+}
+
+.section-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+    line-height: 1.8;
+    margin: 0;
+    padding: 15px;
+    background: rgba(245, 247, 250, 0.5);
+    border-radius: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.generating-text {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* 章节进度 */
+.chapter-progress {
+    margin-bottom: 20px;
+}
+
+.chapter-progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.chapters-list {
+    display: grid;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.chapter-item-mini {
+    background: rgba(245, 247, 250, 0.5);
+    border-radius: 8px;
+    padding: 12px;
+    border-left: 3px solid var(--border-color);
+    transition: all 0.3s;
+}
+
+.chapter-item-mini.completed {
+    border-left-color: var(--success-color);
+}
+
+.chapter-item-mini.generating {
+    border-left-color: var(--primary-color);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.chapter-item-mini:hover {
+    background: rgba(245, 247, 250, 0.8);
+}
+
+.chapter-item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.chapter-number {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.9em;
+}
+
+.chapter-title {
+    flex: 1;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.chapter-status-icon {
+    font-size: 1.1em;
+}
+
+.chapter-outline-preview {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+    line-height: 1.5;
+}
+
+.chapter-word-count {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .container {
+        border-radius: 0;
+    }
+
+    .nav-tabs {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .novel-actions {
+        flex-direction: column;
+    }
+
+    .novel-actions .btn {
+        width: 100%;
+    }
+
+    .progress-steps {
+        flex-wrap: wrap;
+    }
+
+    .progress-step {
+        min-width: 80px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+
+    .generation-section {
+        padding: 15px;
+    }
+}
