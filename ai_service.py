@@ -225,7 +225,14 @@ class AIService:
             {'role': 'user', 'content': prompt}
         ]
 
-        result = self._call_api(messages, temperature=0.3, max_tokens=1500)
+        result, usage = self._call_api(
+            messages,
+            temperature=0.3,
+            max_tokens=1500,
+            novel_id=novel_id,
+            operation='check_settings',
+            stage='check'
+        )
 
         if result:
             try:
@@ -269,7 +276,14 @@ class AIService:
             {'role': 'user', 'content': prompt}
         ]
 
-        result = self._call_api(messages, temperature=0.7, max_tokens=4000)
+        result, usage = self._call_api(
+            messages,
+            temperature=0.7,
+            max_tokens=4000,
+            novel_id=novel_id,
+            operation='generate_outline',
+            stage='outline'
+        )
 
         if result:
             self._log(novel_id, 'outline', '小说大纲生成成功')
