@@ -178,6 +178,8 @@ const app = {
                 this.loadRecentNovels();
             } else if (activeTab === 'novels') {
                 novelManager.loadNovels();
+            } else if (activeTab === 'tokens') {
+                tokenManager.loadTokenStats();
             }
         }, 5000); // 每5秒刷新一次
     }

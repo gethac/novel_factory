@@ -173,7 +173,9 @@
                 <h2 id="progressModalTitle">生成进度</h2>
                 <span class="close-btn" onclick="app.closeModal('progressModal')">&times;</span>
             </div>
-            <div id="progressModalContent"></div>
+            <div class="modal-body">
+                <div id="progressModalContent"></div>
+            </div>
         </div>
     </div>
 
@@ -184,7 +186,9 @@
                 <h2 id="modalNovelTitle">小说详情</h2>
                 <span class="close-btn" onclick="app.closeModal('novelDetailModal')">&times;</span>
             </div>
-            <div id="novelDetailContent"></div>
+            <div class="modal-body">
+                <div id="novelDetailContent"></div>
+            </div>
         </div>
     </div>
 
@@ -195,7 +199,9 @@
                 <h2>生成日志</h2>
                 <span class="close-btn" onclick="app.closeModal('logsModal')">&times;</span>
             </div>
-            <div id="logsContent"></div>
+            <div class="modal-body">
+                <div id="logsContent"></div>
+            </div>
         </div>
     </div>
 
@@ -206,25 +212,27 @@
                 <h2>添加AI配置</h2>
                 <span class="close-btn" onclick="app.closeModal('addConfigModal')">&times;</span>
             </div>
-            <form id="addConfigForm">
-                <div class="form-group">
-                    <label>配置名称 *</label>
-                    <input type="text" id="configName" placeholder="例如：OpenAI GPT-4" required>
-                </div>
-                <div class="form-group">
-                    <label>API地址 *</label>
-                    <input type="text" id="configApiBase" placeholder="https://api.openai.com/v1" required>
-                </div>
-                <div class="form-group">
-                    <label>API密钥 *</label>
-                    <input type="password" id="configApiKey" required>
-                </div>
-                <div class="form-group">
-                    <label>模型名称 *</label>
-                    <input type="text" id="configModelName" placeholder="gpt-4" required>
-                </div>
-                <button type="submit" class="btn btn-primary">保存配置</button>
-            </form>
+            <div class="modal-body">
+                <form id="addConfigForm">
+                    <div class="form-group">
+                        <label>配置名称 *</label>
+                        <input type="text" id="configName" placeholder="例如：OpenAI GPT-4" required>
+                    </div>
+                    <div class="form-group">
+                        <label>API地址 *</label>
+                        <input type="text" id="configApiBase" placeholder="https://api.openai.com/v1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>API密钥 *</label>
+                        <input type="password" id="configApiKey" required>
+                    </div>
+                    <div class="form-group">
+                        <label>模型名称 *</label>
+                        <input type="text" id="configModelName" placeholder="gpt-4" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存配置</button>
+                </form>
+            </div>
         </div>
     </div>
 

@@ -323,8 +323,20 @@ const novelManager = {
                 const novel = await api.novels.getById(novelId);
                 const chapters = await api.novels.getChapters(novelId);
 
+                // 保存当前滚动位置
+                const modalBody = document.querySelector('#progressModal .modal-body');
+                const scrollPosition = modalBody ? modalBody.scrollTop : 0;
+
                 // 更新进度显示
                 this.showProgressModal(novel, chapters);
+
+                // 恢复滚动位置
+                if (modalBody) {
+                    const newModalBody = document.querySelector('#progressModal .modal-body');
+                    if (newModalBody) {
+                        newModalBody.scrollTop = scrollPosition;
+                    }
+                }
 
                 // 如果完成或失败，停止监控
                 if (novel.status === 'completed' || novel.status === 'failed') {
