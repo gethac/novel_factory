@@ -370,6 +370,7 @@
             <button class="nav-tab active" onclick="switchTab('dashboard')">仪表盘</button>
             <button class="nav-tab" onclick="switchTab('create')">创建小说</button>
             <button class="nav-tab" onclick="switchTab('novels')">小说列表</button>
+            <button class="nav-tab" onclick="switchTab('tokens')">Token统计</button>
             <button class="nav-tab" onclick="switchTab('settings')">AI配置</button>
         </div>
 
@@ -392,6 +393,14 @@
                 <div class="stat-card">
                     <h3 id="failedNovels">0</h3>
                     <p>失败</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3 id="totalTokens">0</h3>
+                    <p>总Token消耗</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h3 id="totalCost">$0.00</h3>
+                    <p>总费用</p>
                 </div>
             </div>
 
@@ -431,6 +440,70 @@
         <div id="novels" class="tab-content">
             <h2 style="margin-bottom: 20px;">所有小说</h2>
             <div id="novelsList" class="novel-list"></div>
+        </div>
+
+        <!-- Token统计 -->
+        <div id="tokens" class="tab-content">
+            <h2 style="margin-bottom: 20px;">💰 Token使用统计</h2>
+
+            <!-- 筛选器 -->
+            <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div class="form-group" style="margin: 0;">
+                        <label>时间范围</label>
+                        <select id="tokenDays" onchange="loadTokenStats()" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
+                            <option value="7">最近7天</option>
+                            <option value="30">最近30天</option>
+                            <option value="90">最近90天</option>
+                            <option value="0">全部时间</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label>筛选小说</label>
+                        <select id="tokenNovelFilter" onchange="loadTokenStats()" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
+                            <option value="">全部小说</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Token统计卡片 -->
+            <div class="stats-grid" style="margin-bottom: 30px;">
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h3 id="tokenStatsTotal">0</h3>
+                    <p>总Token</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3 id="tokenStatsPrompt">0</h3>
+                    <p>输入Token</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h3 id="tokenStatsCompletion">0</h3>
+                    <p>输出Token</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <h3 id="tokenStatsCost">$0.00</h3>
+                    <p>总费用</p>
+                </div>
+            </div>
+
+            <!-- 按阶段统计 -->
+            <div style="background: white; border: 2px solid #ddd; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px;">📊 按阶段统计</h3>
+                <div id="stageStatsTable"></div>
+            </div>
+
+            <!-- 按日期趋势 -->
+            <div style="background: white; border: 2px solid #ddd; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px;">📈 使用趋势</h3>
+                <div id="dailyStatsTable"></div>
+            </div>
+
+            <!-- 详细记录 -->
+            <div style="background: white; border: 2px solid #ddd; border-radius: 10px; padding: 20px;">
+                <h3 style="margin-bottom: 15px;">📝 详细记录</h3>
+                <div id="tokenUsagesList" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
         </div>
 
         <!-- AI配置 -->
@@ -508,6 +581,9 @@
                 loadRecentNovels();
             } else if (tabName === 'novels') {
                 loadNovels();
+            } else if (tabName === 'tokens') {
+                loadTokenStats();
+                loadNovelListForFilter();
             } else if (tabName === 'settings') {
                 loadConfigs();
             }
@@ -523,6 +599,8 @@
                 document.getElementById('completedNovels').textContent = stats.completed_novels;
                 document.getElementById('generatingNovels').textContent = stats.generating_novels;
                 document.getElementById('failedNovels').textContent = stats.failed_novels;
+                document.getElementById('totalTokens').textContent = formatNumber(stats.total_tokens || 0);
+                document.getElementById('totalCost').textContent = `$${(stats.total_cost || 0).toFixed(2)}`;
             } catch (error) {
                 console.error('加载统计数据失败:', error);
             }
@@ -811,6 +889,128 @@
                 loadConfigs();
             } catch (error) {
                 alert('删除失败: ' + error.message);
+            }
+        }
+
+        // ==================== Token统计功能 ====================
+
+        // 格式化数字
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // 加载Token统计
+        async function loadTokenStats() {
+            try {
+                const days = document.getElementById('tokenDays').value;
+                const novelId = document.getElementById('tokenNovelFilter').value;
+
+                let url = `${API_BASE}/token-stats?days=${days}`;
+                if (novelId) url += `&novel_id=${novelId}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // 计算总计
+                let totalTokens = 0, totalPrompt = 0, totalCompletion = 0, totalCost = 0;
+                data.usages.forEach(u => {
+                    totalTokens += u.total_tokens || 0;
+                    totalPrompt += u.prompt_tokens || 0;
+                    totalCompletion += u.completion_tokens || 0;
+                    totalCost += u.cost || 0;
+                });
+
+                // 更新统计卡片
+                document.getElementById('tokenStatsTotal').textContent = formatNumber(totalTokens);
+                document.getElementById('tokenStatsPrompt').textContent = formatNumber(totalPrompt);
+                document.getElementById('tokenStatsCompletion').textContent = formatNumber(totalCompletion);
+                document.getElementById('tokenStatsCost').textContent = `$${totalCost.toFixed(2)}`;
+
+                // 按阶段统计表格
+                const stageNames = {
+                    'settings': '小说设定',
+                    'outline': '大纲生成',
+                    'detailed_outline': '细纲生成',
+                    'content': '内容生成',
+                    'check': '质量检查'
+                };
+
+                document.getElementById('stageStatsTable').innerHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f5f5f5;">
+                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">阶段</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Token数</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">费用</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">调用次数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.stage_stats.map(stat => `
+                                <tr>
+                                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${stageNames[stat.stage] || stat.stage}</td>
+                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${formatNumber(stat.total_tokens)}</td>
+                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">$${stat.total_cost.toFixed(4)}</td>
+                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${stat.count}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                // 按日期趋势表格
+                document.getElementById('dailyStatsTable').innerHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f5f5f5;">
+                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">日期</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Token数</th>
+                                <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">费用</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.daily_stats.map(stat => `
+                                <tr>
+                                    <td style="padding: 10px; border-bottom: 1px solid #eee;">${stat.date}</td>
+                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">${formatNumber(stat.total_tokens)}</td>
+                                    <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">$${stat.total_cost.toFixed(4)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                // 详细记录列表
+                document.getElementById('tokenUsagesList').innerHTML = data.usages.slice(0, 50).map(usage => `
+                    <div style="border-bottom: 1px solid #eee; padding: 10px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <strong>${stageNames[usage.stage] || usage.stage} - ${usage.operation}</strong>
+                            <span style="color: #666;">${new Date(usage.created_at).toLocaleString()}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9em; color: #666;">
+                            <span>Token: ${formatNumber(usage.total_tokens)} (输入: ${formatNumber(usage.prompt_tokens)}, 输出: ${formatNumber(usage.completion_tokens)})</span>
+                            <span>费用: $${usage.cost.toFixed(4)} | 耗时: ${usage.duration ? usage.duration.toFixed(2) + 's' : '-'}</span>
+                        </div>
+                        ${usage.chapter_number ? `<div style="font-size: 0.9em; color: #999;">第${usage.chapter_number}章</div>` : ''}
+                    </div>
+                `).join('') || '<p style="text-align: center; color: #999; padding: 20px;">暂无数据</p>';
+
+            } catch (error) {
+                console.error('加载Token统计失败:', error);
+            }
+        }
+
+        // 加载小说列表用于筛选
+        async function loadNovelListForFilter() {
+            try {
+                const response = await fetch(`${API_BASE}/novels`);
+                const novels = await response.json();
+
+                const select = document.getElementById('tokenNovelFilter');
+                select.innerHTML = '<option value="">全部小说</option>' +
+                    novels.map(novel => `<option value="${novel.id}">${novel.title || '未命名小说'}</option>`).join('');
+            } catch (error) {
+                console.error('加载小说列表失败:', error);
             }
         }
 
