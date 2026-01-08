@@ -331,12 +331,19 @@ class AIService:
             {'role': 'user', 'content': prompt}
         ]
 
-        result = self._call_api(messages, temperature=0.3, max_tokens=1500)
+        result, usage = self._call_api(
+            messages,
+            temperature=0.3,
+            max_tokens=1500,
+            novel_id=novel_id,
+            operation='check_outline',
+            stage='check'
+        )
 
         if result:
             try:
                 check_result = json.loads(result)
-                self._log(novel_id, 'check', f'大纲检查完成，总分：{check_result.get("total_score", 0)}')
+                self._log(novel_id, 'check', f'大纲检查完成，总分：{check_result.get("total_score", 0)} (Tokens: {usage["total_tokens"]})')
                 return check_result
             except:
                 self._log(novel_id, 'check', '大纲检查结果解析失败', 'error')
@@ -374,10 +381,18 @@ class AIService:
             {'role': 'user', 'content': prompt}
         ]
 
-        result = self._call_api(messages, temperature=0.7, max_tokens=2000)
+        result, usage = self._call_api(
+            messages,
+            temperature=0.7,
+            max_tokens=2000,
+            novel_id=novel_id,
+            operation='generate_detailed_outline',
+            stage='detailed_outline',
+            chapter_number=chapter_number
+        )
 
         if result:
-            self._log(novel_id, 'detailed_outline', f'第{chapter_number}章细纲生成成功')
+            self._log(novel_id, 'detailed_outline', f'第{chapter_number}章细纲生成成功 (Tokens: {usage["total_tokens"]})')
         else:
             self._log(novel_id, 'detailed_outline', f'第{chapter_number}章细纲生成失败', 'error')
 
@@ -424,12 +439,20 @@ class AIService:
             {'role': 'user', 'content': prompt}
         ]
 
-        result = self._call_api(messages, temperature=0.3, max_tokens=1000)
+        result, usage = self._call_api(
+            messages,
+            temperature=0.3,
+            max_tokens=1000,
+            novel_id=novel_id,
+            operation='check_detailed_outline',
+            stage='check',
+            chapter_number=chapter_number
+        )
 
         if result:
             try:
                 check_result = json.loads(result)
-                self._log(novel_id, 'check', f'第{chapter_number}章细纲检查完成，总分：{check_result.get("total_score", 0)}')
+                self._log(novel_id, 'check', f'第{chapter_number}章细纲检查完成，总分：{check_result.get("total_score", 0)} (Tokens: {usage["total_tokens"]})')
                 return check_result
             except:
                 self._log(novel_id, 'check', f'第{chapter_number}章细纲检查结果解析失败', 'error')
@@ -494,10 +517,18 @@ class AIService:
             {'role': 'user', 'content': prompt}
         ]
 
-        result = self._call_api(messages, temperature=0.8, max_tokens=4000)
+        result, usage = self._call_api(
+            messages,
+            temperature=0.8,
+            max_tokens=4000,
+            novel_id=novel_id,
+            operation='generate_chapter_content',
+            stage='content',
+            chapter_number=chapter_number
+        )
 
         if result:
-            self._log(novel_id, 'content', f'第{chapter_number}章正文生成成功')
+            self._log(novel_id, 'content', f'第{chapter_number}章正文生成成功 (Tokens: {usage["total_tokens"]}, 费用: ${usage["cost"]:.4f})')
         else:
             self._log(novel_id, 'content', f'第{chapter_number}章正文生成失败', 'error')
 
@@ -546,12 +577,20 @@ class AIService:
             {'role': 'user', 'content': prompt}
         ]
 
-        result = self._call_api(messages, temperature=0.3, max_tokens=1500)
+        result, usage = self._call_api(
+            messages,
+            temperature=0.3,
+            max_tokens=1500,
+            novel_id=novel_id,
+            operation='check_chapter_content',
+            stage='check',
+            chapter_number=chapter_number
+        )
 
         if result:
             try:
                 check_result = json.loads(result)
-                self._log(novel_id, 'check', f'第{chapter_number}章正文检查完成，总分：{check_result.get("total_score", 0)}')
+                self._log(novel_id, 'check', f'第{chapter_number}章正文检查完成，总分：{check_result.get("total_score", 0)} (Tokens: {usage["total_tokens"]})')
                 return check_result
             except:
                 self._log(novel_id, 'check', f'第{chapter_number}章正文检查结果解析失败', 'error')
