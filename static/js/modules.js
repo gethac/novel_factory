@@ -195,6 +195,9 @@ const configManager = {
                                 激活
                             </button>
                         ` : ''}
+                        <button class="btn btn-secondary" onclick="configManager.editConfig(${config.id})">
+                            编辑
+                        </button>
                         <button class="btn btn-danger" onclick="configManager.deleteConfig(${config.id})">
                             删除
                         </button>
@@ -215,6 +218,47 @@ const configManager = {
         } catch (error) {
             console.error('添加配置失败:', error);
             utils.showMessage('添加失败: ' + error.message);
+        }
+    },
+
+    // 编辑配置
+    async editConfig(configId) {
+        try {
+            // 获取配置详情
+            const response = await fetch(`${API_BASE}/ai-configs`);
+            const configs = await response.json();
+            const config = configs.find(c => c.id === configId);
+
+            if (!config) {
+                utils.showMessage('配置不存在');
+                return;
+            }
+
+            // 填充表单
+            document.getElementById('editConfigId').value = config.id;
+            document.getElementById('editConfigName').value = config.name;
+            document.getElementById('editConfigApiBase').value = config.api_base;
+            document.getElementById('editConfigApiKey').value = ''; // 密钥不显示
+            document.getElementById('editConfigModelName').value = config.model_name;
+            document.getElementById('editConfigType').value = config.config_type || 'both';
+
+            // 显示编辑模态框
+            app.showModal('editConfigModal');
+        } catch (error) {
+            console.error('加载配置失败:', error);
+            utils.showMessage('加载配置失败: ' + error.message);
+        }
+    },
+
+    // 更新配置
+    async updateConfig(configId, formData) {
+        try {
+            await api.configs.update(configId, formData);
+            utils.showMessage('配置更新成功！');
+            this.loadConfigs();
+        } catch (error) {
+            console.error('更新配置失败:', error);
+            utils.showMessage('更新失败: ' + error.message);
         }
     },
 

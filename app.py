@@ -169,6 +169,7 @@ def create_ai_config():
         api_base=data.get('api_base'),
         api_key=data.get('api_key'),
         model_name=data.get('model_name'),
+        config_type=data.get('config_type', 'both'),
         is_active=data.get('is_active', False)
     )
 
@@ -196,6 +197,8 @@ def update_ai_config(config_id):
         config.api_key = data['api_key']
     if 'model_name' in data:
         config.model_name = data['model_name']
+    if 'config_type' in data:
+        config.config_type = data['config_type']
     if 'is_active' in data:
         config.is_active = data['is_active']
 

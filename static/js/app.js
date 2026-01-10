@@ -28,6 +28,15 @@ const app = {
             });
         }
 
+        // 编辑AI配置表单
+        const editConfigForm = document.getElementById('editConfigForm');
+        if (editConfigForm) {
+            editConfigForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleEditConfig();
+            });
+        }
+
         // 关闭模态框（点击背景）
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
@@ -144,6 +153,30 @@ const app = {
         // 清空表单并关闭模态框
         document.getElementById('addConfigForm').reset();
         this.closeModal('addConfigModal');
+    },
+
+    // 处理编辑AI配置
+    async handleEditConfig() {
+        const configId = parseInt(document.getElementById('editConfigId').value);
+        const apiKey = document.getElementById('editConfigApiKey').value;
+
+        const formData = {
+            name: document.getElementById('editConfigName').value,
+            api_base: document.getElementById('editConfigApiBase').value,
+            model_name: document.getElementById('editConfigModelName').value,
+            config_type: document.getElementById('editConfigType').value
+        };
+
+        // 只有在输入了新密钥时才更新
+        if (apiKey) {
+            formData.api_key = apiKey;
+        }
+
+        await configManager.updateConfig(configId, formData);
+
+        // 清空表单并关闭模态框
+        document.getElementById('editConfigForm').reset();
+        this.closeModal('editConfigModal');
     },
 
     // 关闭模态框

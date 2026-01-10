@@ -249,6 +249,52 @@
         </div>
     </div>
 
+    <!-- 编辑配置模态框 -->
+    <div id="editConfigModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>编辑AI配置</h2>
+                <span class="close-btn" onclick="app.closeModal('editConfigModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editConfigForm">
+                    <input type="hidden" id="editConfigId">
+                    <div class="form-group">
+                        <label>配置名称 *</label>
+                        <input type="text" id="editConfigName" placeholder="例如：OpenAI GPT-4" required>
+                    </div>
+                    <div class="form-group">
+                        <label>API地址 *</label>
+                        <input type="text" id="editConfigApiBase" placeholder="https://api.openai.com/v1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>API密钥 *</label>
+                        <input type="password" id="editConfigApiKey" placeholder="留空则不修改">
+                        <small style="color: var(--text-secondary); display: block; margin-top: 5px;">
+                            💡 提示：如不需要修改密钥，请留空
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label>模型名称 *</label>
+                        <input type="text" id="editConfigModelName" placeholder="gpt-4" required>
+                    </div>
+                    <div class="form-group">
+                        <label>配置类型 *</label>
+                        <select id="editConfigType" required>
+                            <option value="both">通用（生成+校验）</option>
+                            <option value="generation">仅用于生成</option>
+                            <option value="check">仅用于校验</option>
+                        </select>
+                        <small style="color: var(--text-secondary); display: block; margin-top: 5px;">
+                            💡 提示：可以为生成和校验配置不同的模型
+                        </small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存修改</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- 引入JavaScript模块 -->
     <script src="/static/js/api.js"></script>
     <script src="/static/js/novel.js"></script>
