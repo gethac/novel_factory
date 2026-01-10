@@ -160,13 +160,30 @@ const configManager = {
                 return;
             }
 
-            container.innerHTML = configs.map(config => `
+            container.innerHTML = configs.map(config => {
+                const typeLabels = {
+                    'both': '通用',
+                    'generation': '生成',
+                    'check': '校验'
+                };
+                const typeColors = {
+                    'both': 'var(--primary-color)',
+                    'generation': 'var(--success-color)',
+                    'check': 'var(--warning-color)'
+                };
+                const typeLabel = typeLabels[config.config_type] || '通用';
+                const typeColor = typeColors[config.config_type] || 'var(--primary-color)';
+
+                return `
                 <div class="novel-card ${config.is_active ? 'active' : ''}" style="${config.is_active ? 'border-color: var(--success-color);' : ''}">
                     <div class="novel-card-header">
                         <div class="novel-title">
                             ${config.name}
                             ${config.is_active ? '<span style="color: var(--success-color); margin-left: 10px;">✓ 当前使用</span>' : ''}
                         </div>
+                        <span style="padding: 4px 12px; background: ${typeColor}15; color: ${typeColor}; border-radius: 12px; font-size: 0.85em; font-weight: 600;">
+                            ${typeLabel}
+                        </span>
                     </div>
                     <div class="novel-info">
                         <div>API: ${config.api_base}</div>
@@ -183,7 +200,7 @@ const configManager = {
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         } catch (error) {
             console.error('加载配置失败:', error);
         }

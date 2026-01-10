@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI小说自动生产系统</title>
+    <title>Novel Factory - AI小说工厂</title>
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="/static/css/components.css">
 </head>
@@ -11,8 +11,8 @@
     <div class="container">
         <!-- 头部 -->
         <div class="header">
-            <h1>🤖 AI小说自动生产系统</h1>
-            <p>完全自动化的小说创作工厂 - 从设定到成品，无需人工干预</p>
+            <h1 style="font-size: 2.5em; letter-spacing: 1px; background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Novel Factory</h1>
+            <p style="font-size: 1.1em; margin-top: 10px;">AI驱动的智能小说创作工厂 · 从灵感到成品，全程自动化</p>
         </div>
 
         <!-- 导航标签 -->
@@ -231,6 +231,17 @@
                     <div class="form-group">
                         <label>模型名称 *</label>
                         <input type="text" id="configModelName" placeholder="gpt-4" required>
+                    </div>
+                    <div class="form-group">
+                        <label>配置类型 *</label>
+                        <select id="configType" required>
+                            <option value="both">通用（生成+校验）</option>
+                            <option value="generation">仅用于生成</option>
+                            <option value="check">仅用于校验</option>
+                        </select>
+                        <small style="color: var(--text-secondary); display: block; margin-top: 5px;">
+                            💡 提示：可以为生成和校验配置不同的模型，例如用GPT-4生成，用GPT-3.5校验以节省成本
+                        </small>
                     </div>
                     <button type="submit" class="btn btn-primary">保存配置</button>
                 </form>

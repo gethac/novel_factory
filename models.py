@@ -136,6 +136,7 @@ class AIConfig(db.Model):
     api_key = db.Column(db.String(500))
     model_name = db.Column(db.String(100))
     is_active = db.Column(db.Boolean, default=False)
+    config_type = db.Column(db.String(20), default='generation')  # generation, check, both
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -147,6 +148,7 @@ class AIConfig(db.Model):
             'api_key': '***' if self.api_key else None,  # 隐藏API密钥
             'model_name': self.model_name,
             'is_active': self.is_active,
+            'config_type': self.config_type,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

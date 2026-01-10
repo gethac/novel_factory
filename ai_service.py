@@ -25,10 +25,30 @@ class AIService:
         self.model = Config.AI_MODEL
         # 延迟加载配置，避免在应用上下文外访问数据库
 
-    def _load_active_config(self):
-        """加载激活的AI配置"""
+    def _load_active_config(self, is_check: bool = False):
+        """加载激活的AI配置
+
+        Args:
+            is_check: 是否为校验操作。True=校验，False=生成
+        """
         try:
-            active_config = AIConfig.query.filter_by(is_active=True).first()
+            if is_check:
+                # 优先查找专用的校验配置
+                active_config = AIConfig.query.filter_by(is_active=True, config_type='check').first()
+                # 如果没有专用校验配置，查找通用配置
+                if not active_config:
+                    active_config = AIConfig.query.filter_by(is_active=True, config_type='both').first()
+            else:
+                # 优先查找专用的生成配置
+                active_config = AIConfig.query.filter_by(is_active=True, config_type='generation').first()
+                # 如果没有专用生成配置，查找通用配置
+                if not active_config:
+                    active_config = AIConfig.query.filter_by(is_active=True, config_type='both').first()
+
+            # 如果还是没有，使用任何激活的配置
+            if not active_config:
+                active_config = AIConfig.query.filter_by(is_active=True).first()
+
             if active_config:
                 self.api_base = active_config.api_base
                 self.api_key = active_config.api_key
@@ -46,10 +66,14 @@ class AIService:
 
     def _call_api(self, messages: list, temperature: float = 0.7, max_tokens: int = 4000,
                   novel_id: int = None, operation: str = None, stage: str = None,
-                  chapter_number: int = None) -> Tuple[Optional[str], Optional[Dict]]:
-        """调用AI API并记录Token使用"""
-        # 尝试加载激活的配置
-        self._load_active_config()
+                  chapter_number: int = None, is_check: bool = False) -> Tuple[Optional[str], Optional[Dict]]:
+        """调用AI API并记录Token使用
+
+        Args:
+            is_check: 是否为校验操作，用于选择合适的模型配置
+        """
+        # 尝试加载激活的配置（根据是否为校验操作选择不同配置）
+        self._load_active_config(is_check=is_check)
 
         start_time = time.time()
 
@@ -238,7 +262,8 @@ class AIService:
             max_tokens=1500,
             novel_id=novel_id,
             operation='check_settings',
-            stage='check'
+            stage='check',
+            is_check=True
         )
 
         if result:
@@ -362,7 +387,8 @@ class AIService:
             max_tokens=1500,
             novel_id=novel_id,
             operation='check_outline',
-            stage='check'
+            stage='check',
+            is_check=True
         )
 
         if result:
@@ -486,7 +512,8 @@ class AIService:
             novel_id=novel_id,
             operation='check_detailed_outline',
             stage='check',
-            chapter_number=chapter_number
+            chapter_number=chapter_number,
+            is_check=True
         )
 
         if result:
@@ -639,7 +666,8 @@ class AIService:
             novel_id=novel_id,
             operation='check_chapter_content',
             stage='check',
-            chapter_number=chapter_number
+            chapter_number=chapter_number,
+            is_check=True
         )
 
         if result:

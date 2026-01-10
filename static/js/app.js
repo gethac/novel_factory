@@ -135,6 +135,7 @@ const app = {
             api_base: document.getElementById('configApiBase').value,
             api_key: document.getElementById('configApiKey').value,
             model_name: document.getElementById('configModelName').value,
+            config_type: document.getElementById('configType').value,
             is_active: false
         };
 
