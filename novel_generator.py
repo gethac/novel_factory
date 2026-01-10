@@ -12,6 +12,17 @@ class NovelGenerator:
         self.ai_service = AIService()
         self.max_retries = Config.MAX_RETRIES
 
+    def _check_if_paused(self, novel: Novel) -> bool:
+        """检查是否被暂停"""
+        # 刷新数据库状态
+        db.session.refresh(novel)
+        if novel.is_paused:
+            novel.status = 'paused'
+            db.session.commit()
+            print(f"小说 ID:{novel.id} 已暂停")
+            return True
+        return False
+
     def generate_novel(self, novel_id: int):
         """完整的小说生成流程"""
         novel = Novel.query.get(novel_id)
@@ -21,21 +32,28 @@ class NovelGenerator:
         try:
             # 更新状态
             novel.status = 'generating'
+            novel.is_paused = False
             db.session.commit()
 
             # 步骤1: 生成并检查小说设定
+            if self._check_if_paused(novel):
+                return False
             if not self._generate_and_check_settings(novel):
                 novel.status = 'failed'
                 db.session.commit()
                 return False
 
             # 步骤2: 生成并检查大纲
+            if self._check_if_paused(novel):
+                return False
             if not self._generate_and_check_outline(novel):
                 novel.status = 'failed'
                 db.session.commit()
                 return False
 
             # 步骤3: 为每章生成细纲和内容
+            if self._check_if_paused(novel):
+                return False
             if not self._generate_chapters(novel):
                 novel.status = 'failed'
                 db.session.commit()
@@ -145,6 +163,9 @@ class NovelGenerator:
 
         # 为每章生成内容
         for chapter in chapters:
+            # 检查是否暂停
+            if self._check_if_paused(novel):
+                return False
             if not self._generate_chapter(novel, chapter):
                 return False
 

@@ -16,8 +16,9 @@ class Novel(db.Model):
     target_chapters = db.Column(db.Integer)  # 目标章节数
 
     # 生成状态
-    status = db.Column(db.String(50), default='pending')  # pending, generating, completed, failed
+    status = db.Column(db.String(50), default='pending')  # pending, generating, paused, completed, failed
     current_stage = db.Column(db.String(50))  # settings, outline, detailed_outline, content, export
+    is_paused = db.Column(db.Boolean, default=False)  # 是否暂停
 
     # 生成内容
     settings = db.Column(db.Text)  # AI生成的小说设定
@@ -51,6 +52,7 @@ class Novel(db.Model):
             'target_chapters': self.target_chapters,
             'status': self.status,
             'current_stage': self.current_stage,
+            'is_paused': self.is_paused,
             'settings': self.settings,
             'settings_check': self.settings_check,
             'outline': self.outline,

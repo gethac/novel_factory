@@ -84,6 +84,198 @@ def start_generation(novel_id):
     return jsonify({'message': '小说生成已启动', 'novel_id': novel_id})
 
 
+@app.route('/api/novels/<int:novel_id>/pause', methods=['POST'])
+def pause_generation(novel_id):
+    """暂停小说生成"""
+    novel = Novel.query.get_or_404(novel_id)
+
+    if novel.status != 'generating':
+        return jsonify({'error': '小说未在生成中'}), 400
+
+    novel.is_paused = True
+    db.session.commit()
+
+    return jsonify({'message': '已发送暂停信号，生成将在当前步骤完成后暂停'})
+
+
+@app.route('/api/novels/<int:novel_id>/resume', methods=['POST'])
+def resume_generation(novel_id):
+    """恢复小说生成"""
+    novel = Novel.query.get_or_404(novel_id)
+
+    if novel.status not in ['paused', 'generating']:
+        return jsonify({'error': '小说未处于暂停状态'}), 400
+
+    novel.is_paused = False
+    novel.status = 'generating'
+    db.session.commit()
+
+    # 在后台线程中继续生成
+    def generate():
+        with app.app_context():
+            novel_generator.generate_novel(novel_id)
+
+    thread = threading.Thread(target=generate)
+    thread.daemon = True
+    thread.start()
+
+    return jsonify({'message': '小说生成已恢复'})
+
+
+@app.route('/api/novels/<int:novel_id>/regenerate/<content_type>', methods=['POST'])
+def regenerate_content(novel_id, content_type):
+    """重新生成指定内容
+
+    content_type: settings, outline, chapter_outline, chapter_content
+    """
+    novel = Novel.query.get_or_404(novel_id)
+    data = request.json or {}
+    custom_prompt = data.get('custom_prompt', '')
+    chapter_id = data.get('chapter_id')
+
+    try:
+        if content_type == 'settings':
+            # 重新生成小说设定
+            if custom_prompt:
+                # 使用自定义提示词
+                result = novel_generator.ai_service.generate_settings_with_custom_prompt(
+                    theme=novel.theme,
+                    background=novel.background,
+                    target_words=novel.target_words,
+                    target_chapters=novel.target_chapters,
+                    custom_prompt=custom_prompt,
+                    novel_id=novel.id
+                )
+            else:
+                # 使用默认提示词
+                result = novel_generator.ai_service.generate_settings(
+                    theme=novel.theme,
+                    background=novel.background,
+                    target_words=novel.target_words,
+                    target_chapters=novel.target_chapters,
+                    novel_id=novel.id
+                )
+
+            if result:
+                novel.settings = result
+                db.session.commit()
+                return jsonify({'message': '设定重新生成成功', 'content': result})
+            else:
+                return jsonify({'error': '设定生成失败'}), 500
+
+        elif content_type == 'outline':
+            # 重新生成大纲
+            if not novel.settings:
+                return jsonify({'error': '请先生成小说设定'}), 400
+
+            if custom_prompt:
+                result = novel_generator.ai_service.generate_outline_with_custom_prompt(
+                    settings=novel.settings,
+                    target_chapters=novel.target_chapters,
+                    custom_prompt=custom_prompt,
+                    novel_id=novel.id
+                )
+            else:
+                result = novel_generator.ai_service.generate_outline(
+                    settings=novel.settings,
+                    target_chapters=novel.target_chapters,
+                    novel_id=novel.id
+                )
+
+            if result:
+                novel.outline = result
+                db.session.commit()
+                return jsonify({'message': '大纲重新生成成功', 'content': result})
+            else:
+                return jsonify({'error': '大纲生成失败'}), 500
+
+        elif content_type == 'chapter_outline':
+            # 重新生成章节细纲
+            if not chapter_id:
+                return jsonify({'error': '缺少章节ID'}), 400
+
+            chapter = Chapter.query.get_or_404(chapter_id)
+            if chapter.novel_id != novel_id:
+                return jsonify({'error': '章节不属于该小说'}), 400
+
+            chapter_info = novel_generator._get_chapter_info_from_outline(novel.outline, chapter.chapter_number)
+            words_per_chapter = novel.target_words // novel.target_chapters
+
+            if custom_prompt:
+                result = novel_generator.ai_service.generate_detailed_outline_with_custom_prompt(
+                    chapter_info=chapter_info,
+                    settings=novel.settings,
+                    outline=novel.outline,
+                    chapter_number=chapter.chapter_number,
+                    target_words=words_per_chapter,
+                    custom_prompt=custom_prompt,
+                    novel_id=novel.id
+                )
+            else:
+                result = novel_generator.ai_service.generate_detailed_outline(
+                    chapter_info=chapter_info,
+                    settings=novel.settings,
+                    outline=novel.outline,
+                    chapter_number=chapter.chapter_number,
+                    target_words=words_per_chapter,
+                    novel_id=novel.id
+                )
+
+            if result:
+                chapter.detailed_outline = result
+                db.session.commit()
+                return jsonify({'message': f'第{chapter.chapter_number}章细纲重新生成成功', 'content': result})
+            else:
+                return jsonify({'error': '细纲生成失败'}), 500
+
+        elif content_type == 'chapter_content':
+            # 重新生成章节内容
+            if not chapter_id:
+                return jsonify({'error': '缺少章节ID'}), 400
+
+            chapter = Chapter.query.get_or_404(chapter_id)
+            if chapter.novel_id != novel_id:
+                return jsonify({'error': '章节不属于该小说'}), 400
+
+            if not chapter.detailed_outline:
+                return jsonify({'error': '请先生成章节细纲'}), 400
+
+            words_per_chapter = novel.target_words // novel.target_chapters
+
+            if custom_prompt:
+                result = novel_generator.ai_service.generate_chapter_content_with_custom_prompt(
+                    detailed_outline=chapter.detailed_outline,
+                    settings=novel.settings,
+                    chapter_title=chapter.title,
+                    target_words=words_per_chapter,
+                    custom_prompt=custom_prompt,
+                    novel_id=novel.id,
+                    chapter_number=chapter.chapter_number
+                )
+            else:
+                result = novel_generator.ai_service.generate_chapter_content(
+                    detailed_outline=chapter.detailed_outline,
+                    settings=novel.settings,
+                    chapter_title=chapter.title,
+                    target_words=words_per_chapter,
+                    novel_id=novel.id,
+                    chapter_number=chapter.chapter_number
+                )
+
+            if result:
+                chapter.content = result
+                chapter.word_count = len(result)
+                db.session.commit()
+                return jsonify({'message': f'第{chapter.chapter_number}章内容重新生成成功', 'content': result})
+            else:
+                return jsonify({'error': '内容生成失败'}), 500
+        else:
+            return jsonify({'error': '不支持的内容类型'}), 400
+
+    except Exception as e:
+        return jsonify({'error': f'重新生成失败: {str(e)}'}), 500
+
+
 @app.route('/api/novels/<int:novel_id>', methods=['DELETE'])
 def delete_novel(novel_id):
     """删除小说"""
