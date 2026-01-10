@@ -60,30 +60,32 @@
 
         <!-- 创建小说 -->
         <div id="create" class="tab-content">
-            <h2 style="margin-bottom: 20px; color: var(--text-color);">创建新小说任务</h2>
-            <form id="createNovelForm" style="max-width: 800px;">
-                <div class="form-group">
-                    <label>小说主题 *</label>
-                    <input type="text" id="theme" placeholder="例如：都市修仙、科幻冒险、古代言情等" required>
-                </div>
+            <div style="max-width: 800px; margin: 0 auto;">
+                <h2 style="margin-bottom: 20px; color: var(--text-color);">创建新小说任务</h2>
+                <form id="createNovelForm">
+                    <div class="form-group">
+                        <label>小说主题 *</label>
+                        <input type="text" id="theme" placeholder="例如：都市修仙、科幻冒险、古代言情等" required>
+                    </div>
 
-                <div class="form-group">
-                    <label>背景设定 *</label>
-                    <textarea id="background" placeholder="详细描述小说的世界观、时代背景、特殊设定等" required></textarea>
-                </div>
+                    <div class="form-group">
+                        <label>背景设定 *</label>
+                        <textarea id="background" placeholder="详细描述小说的世界观、时代背景、特殊设定等" required></textarea>
+                    </div>
 
-                <div class="form-group">
-                    <label>目标字数 *</label>
-                    <input type="number" id="targetWords" value="30000" min="10000" max="1000000" required>
-                </div>
+                    <div class="form-group">
+                        <label>目标字数 *</label>
+                        <input type="number" id="targetWords" value="30000" min="10000" max="1000000" required>
+                    </div>
 
-                <div class="form-group">
-                    <label>目标章节数 *</label>
-                    <input type="number" id="targetChapters" value="10" min="5" max="200" required>
-                </div>
+                    <div class="form-group">
+                        <label>目标章节数 *</label>
+                        <input type="number" id="targetChapters" value="10" min="5" max="200" required>
+                    </div>
 
-                <button type="submit" class="btn btn-primary">创建并开始生成</button>
-            </form>
+                    <button type="submit" class="btn btn-primary">创建并开始生成</button>
+                </form>
+            </div>
         </div>
 
         <!-- 小说列表 -->

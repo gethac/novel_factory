@@ -153,7 +153,15 @@ const novelManager = {
         const title = document.getElementById('progressModalTitle');
         const content = document.getElementById('progressModalContent');
 
-        title.textContent = novel.title || '未命名小说';
+        title.innerHTML = `
+            ${novel.title || '未命名小说'}
+            ${novel.status === 'generating' ? `
+                <span class="generation-status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span>实时生成中</span>
+                </span>
+            ` : ''}
+        `;
 
         // 构建进度步骤
         const stages = [
@@ -190,7 +198,10 @@ const novelManager = {
                         ${novel.current_stage === 'settings' ? '<span class="loading-spinner"></span>' : '<span class="status-check">✓</span>'}
                     </div>
                     <div class="section-content">
-                        <pre>${novel.settings}</pre>
+                        <details open>
+                            <summary style="cursor: pointer; color: var(--primary-color); font-weight: 600; margin-bottom: 10px;">查看详细设定</summary>
+                            <pre>${novel.settings}</pre>
+                        </details>
                     </div>
                 </div>
             `;
@@ -202,7 +213,7 @@ const novelManager = {
                         <span class="loading-spinner"></span>
                     </div>
                     <div class="section-content">
-                        <p class="generating-text">正在生成小说设定...</p>
+                        <p class="generating-text">⏳ 正在生成小说设定...</p>
                     </div>
                 </div>
             `;
@@ -217,7 +228,10 @@ const novelManager = {
                         ${novel.current_stage === 'outline' ? '<span class="loading-spinner"></span>' : '<span class="status-check">✓</span>'}
                     </div>
                     <div class="section-content">
-                        <pre>${novel.outline}</pre>
+                        <details open>
+                            <summary style="cursor: pointer; color: var(--primary-color); font-weight: 600; margin-bottom: 10px;">查看完整大纲</summary>
+                            <pre>${novel.outline}</pre>
+                        </details>
                     </div>
                 </div>
             `;
@@ -229,7 +243,7 @@ const novelManager = {
                         <span class="loading-spinner"></span>
                     </div>
                     <div class="section-content">
-                        <p class="generating-text">正在生成故事大纲...</p>
+                        <p class="generating-text">⏳ 正在生成故事大纲...</p>
                     </div>
                 </div>
             `;
@@ -269,7 +283,16 @@ const novelManager = {
                                     </div>
                                     ${ch.detailed_outline ? `
                                         <div class="chapter-outline-preview">
-                                            <strong>细纲:</strong> ${ch.detailed_outline.substring(0, 100)}...
+                                            <details style="margin-top: 8px;">
+                                                <summary style="cursor: pointer; color: var(--primary-color); font-weight: 500;">
+                                                    <strong>📝 细纲</strong> (点击展开)
+                                                </summary>
+                                                <div style="margin-top: 10px; padding: 12px; background: rgba(245, 247, 250, 0.8); border-radius: 8px; white-space: pre-wrap; line-height: 1.6; font-size: 0.9em;">${ch.detailed_outline}</div>
+                                            </details>
+                                        </div>
+                                    ` : ch.status === 'generating' ? `
+                                        <div class="chapter-outline-preview">
+                                            <p style="color: var(--text-secondary); font-style: italic; margin-top: 8px;">⏳ 正在生成细纲...</p>
                                         </div>
                                     ` : ''}
                                     ${ch.word_count ? `

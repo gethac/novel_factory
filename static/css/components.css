@@ -5,18 +5,19 @@
 }
 
 .novel-card {
-    border: 1px solid var(--border-color);
-    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
     padding: 25px;
     transition: all 0.3s;
-    background: white;
-    box-shadow: var(--shadow-sm);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 .novel-card:hover {
     border-color: var(--primary-color);
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-5px);
 }
 
 .novel-card-header {
@@ -117,12 +118,13 @@
 
 /* 进度步骤指示器 */
 .progress-container {
-    background: white;
-    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
     padding: 25px;
     margin-bottom: 20px;
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .progress-steps {
@@ -244,7 +246,8 @@
     border: 1px solid var(--border-color);
     padding: 15px;
     border-radius: 10px;
-    background: white;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(15px);
     transition: all 0.3s;
 }
 
@@ -278,13 +281,40 @@
     color: var(--text-secondary);
 }
 
+/* 实时生成状态指示器 */
+.generation-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 20px;
+    font-size: 0.9em;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.generation-status-indicator .pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+}
+
 /* Token统计卡片 */
 .token-stats-card {
-    background: white;
-    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
     padding: 20px;
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.8);
     margin-bottom: 20px;
 }
 
@@ -322,7 +352,8 @@
 }
 
 .generation-section {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
