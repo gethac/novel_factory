@@ -830,3 +830,223 @@ class AIService:
             db.session.commit()
         except Exception as e:
             print(f"日志记录失败: {str(e)}")
+
+    # ==================== 自定义提示词生成方法 ====================
+
+    def generate_settings_with_custom_prompt(self, theme: str, background: str, target_words: int, 
+                                            target_chapters: int, custom_prompt: str, novel_id: int) -> Optional[str]:
+        """使用自定义提示词生成小说设定"""
+        self._log(novel_id, 'settings', '使用自定义提示词生成小说设定...')
+
+        # 构建包含原有上下文和自定义提示词的完整提示
+        prompt = f"""你是一位资深的小说策划师。请根据以下要求，生成一份完整的小说设定。
+
+【基础要求】
+- 主题：{theme}
+- 背景：{background}
+- 目标字数：{target_words}字
+- 目标章节数：{target_chapters}章
+
+【用户自定义要求】
+{custom_prompt}
+
+请生成包含以下内容的小说设定：
+1. 世界观设定（时代背景、地理环境、社会结构）
+2. 力量体系（修炼等级、能力划分等，如适用）
+3. 主要角色设定（主角、重要配角、反派）
+4. 核心冲突（主要矛盾和故事驱动力）
+5. 故事基调和风格
+
+请输出详细的设定内容（800-1000字）。"""
+
+        messages = [
+            {'role': 'system', 'content': '你是一位经验丰富的小说策划师，擅长创建完整的故事世界。'},
+            {'role': 'user', 'content': prompt}
+        ]
+
+        result, usage = self._call_api(
+            messages,
+            temperature=0.8,
+            max_tokens=3000,
+            novel_id=novel_id,
+            operation='generate_settings_custom',
+            stage='settings'
+        )
+
+        if result:
+            self._log(novel_id, 'settings', f'小说设定生成成功（自定义提示词）')
+        else:
+            self._log(novel_id, 'settings', '小说设定生成失败（自定义提示词）', 'error')
+
+        return result
+
+    def generate_outline_with_custom_prompt(self, settings: str, target_chapters: int, 
+                                           custom_prompt: str, novel_id: int) -> Optional[str]:
+        """使用自定义提示词生成大纲"""
+        self._log(novel_id, 'outline', '使用自定义提示词生成大纲...')
+
+        prompt = f"""你是一位经验丰富的小说大纲师。请根据以下设定和要求，生成完整的章节大纲。
+
+【小说设定】
+{settings}
+
+【基础要求】
+- 目标章节数：{target_chapters}章
+
+【用户自定义要求】
+{custom_prompt}
+
+请按以下格式输出大纲：
+
+第1章：[章节标题]
+概要：[200字左右的章节内容概要]
+
+第2章：[章节标题]
+概要：[200字左右的章节内容概要]
+
+...以此类推"""
+
+        messages = [
+            {'role': 'system', 'content': '你是一位经验丰富的小说大纲师，擅长构建完整的故事结构。'},
+            {'role': 'user', 'content': prompt}
+        ]
+
+        result, usage = self._call_api(
+            messages,
+            temperature=0.7,
+            max_tokens=4000,
+            novel_id=novel_id,
+            operation='generate_outline_custom',
+            stage='outline'
+        )
+
+        if result:
+            self._log(novel_id, 'outline', '小说大纲生成成功（自定义提示词）')
+        else:
+            self._log(novel_id, 'outline', '小说大纲生成失败（自定义提示词）', 'error')
+
+        return result
+
+    def generate_detailed_outline_with_custom_prompt(self, chapter_info: str, settings: str, outline: str,
+                                                    chapter_number: int, target_words: int, 
+                                                    custom_prompt: str, novel_id: int) -> Optional[str]:
+        """使用自定义提示词生成章节细纲"""
+        self._log(novel_id, 'detailed_outline', f'使用自定义提示词生成第{chapter_number}章细纲...')
+
+        prompt = f"""你是一位经验丰富的小说细纲师。请根据以下信息，生成详细的章节细纲。
+
+【小说设定】
+{settings}
+
+【整体大纲】
+{outline}
+
+【本章信息】
+{chapter_info}
+
+【基础要求】
+- 目标字数：约{target_words}字
+- 细纲需要包含：场景、人物、对话要点、情节发展、情感变化
+
+【用户自定义要求】
+{custom_prompt}
+
+请输出详细的章节细纲（800-1000字）。"""
+
+        messages = [
+            {'role': 'system', 'content': '你是一位经验丰富的小说细纲师，擅长将章节概要扩展为详细的写作指导。'},
+            {'role': 'user', 'content': prompt}
+        ]
+
+        result, usage = self._call_api(
+            messages,
+            temperature=0.7,
+            max_tokens=2000,
+            novel_id=novel_id,
+            operation='generate_detailed_outline_custom',
+            stage='detailed_outline',
+            chapter_number=chapter_number
+        )
+
+        if result:
+            self._log(novel_id, 'detailed_outline', f'第{chapter_number}章细纲生成成功（自定义提示词）')
+        else:
+            self._log(novel_id, 'detailed_outline', f'第{chapter_number}章细纲生成失败（自定义提示词）', 'error')
+
+        return result
+
+    def generate_chapter_content_with_custom_prompt(self, detailed_outline: str, settings: str, 
+                                                   chapter_title: str, target_words: int,
+                                                   custom_prompt: str, novel_id: int, 
+                                                   chapter_number: int) -> Optional[str]:
+        """使用自定义提示词生成章节内容"""
+        self._log(novel_id, 'content', f'使用自定义提示词生成第{chapter_number}章正文...')
+
+        writing_rules = """你是一位专业的网络小说作家。请严格遵守以下写作规则：
+
+【去翻译腔规则】
+1. 名词先行：避免长定语，将名词放在前面
+   - 错误：那个穿着华丽衣服的高大男人
+   - 正确：男人很高大，穿着华丽的衣服
+
+2. 动词主导：多用动词，少用"的"字
+   - 错误：他的脸上的表情是愤怒的
+   - 正确：他脸上满是愤怒
+
+3. 短句为主：避免长句和从句套从句
+   - 错误：当他看到那个曾经伤害过他的人的时候，他感到了一种难以名状的情绪
+   - 正确：他看到了那个人。那个曾经伤害过他的人。一种难以名状的情绪涌上心头
+
+4. 避免被动语态：多用主动语态
+   - 错误：门被他推开了
+   - 正确：他推开了门
+
+【网文写作规则】
+1. 节奏要快：每段不超过3-4句话
+2. 对话要多：用对话推动情节
+3. 冲突要密：每章至少一个小冲突或转折
+4. 细节要实：用具体细节而非抽象描述"""
+
+        prompt = f"""请根据以下细纲和设定，创作本章内容。
+
+【小说设定】
+{settings}
+
+【章节细纲】
+{detailed_outline}
+
+【章节标题】
+{chapter_title}
+
+【基础要求】
+- 目标字数：{target_words}字左右
+- 严格按照细纲展开
+- 对话要自然生动
+- 注意情节节奏和情感渲染
+
+【用户自定义要求】
+{custom_prompt}
+
+请开始创作这一章的正文内容。"""
+
+        messages = [
+            {'role': 'system', 'content': writing_rules},
+            {'role': 'user', 'content': prompt}
+        ]
+
+        result, usage = self._call_api(
+            messages,
+            temperature=0.8,
+            max_tokens=4000,
+            novel_id=novel_id,
+            operation='generate_chapter_content_custom',
+            stage='content',
+            chapter_number=chapter_number
+        )
+
+        if result:
+            self._log(novel_id, 'content', f'第{chapter_number}章正文生成成功（自定义提示词）')
+        else:
+            self._log(novel_id, 'content', f'第{chapter_number}章正文生成失败（自定义提示词）', 'error')
+
+        return result

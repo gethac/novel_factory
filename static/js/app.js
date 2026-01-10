@@ -5,7 +5,7 @@ const app = {
         this.bindEvents();
         this.loadStats();
         this.loadRecentNovels();
-        this.startAutoRefresh();
+        // 移除自动刷新，改为手动刷新
     },
 
     // 绑定事件
@@ -200,22 +200,24 @@ const app = {
         }
     },
 
-    // 自动刷新
-    startAutoRefresh() {
-        setInterval(() => {
-            const activeTabElement = document.querySelector('.tab-content.active');
-            if (!activeTabElement) return;
+    // 手动刷新当前页面数据
+    refreshCurrentTab() {
+        const activeTabElement = document.querySelector('.tab-content.active');
+        if (!activeTabElement) return;
 
-            const activeTab = activeTabElement.id;
-            if (activeTab === 'dashboard') {
-                this.loadStats();
-                this.loadRecentNovels();
-            } else if (activeTab === 'novels') {
-                novelManager.loadNovels();
-            } else if (activeTab === 'tokens') {
-                tokenManager.loadTokenStats();
-            }
-        }, 5000); // 每5秒刷新一次
+        const activeTab = activeTabElement.id;
+        if (activeTab === 'dashboard') {
+            this.loadStats();
+            this.loadRecentNovels();
+        } else if (activeTab === 'novels') {
+            novelManager.loadNovels();
+        } else if (activeTab === 'tokens') {
+            tokenManager.loadTokenStats();
+        } else if (activeTab === 'settings') {
+            configManager.loadConfigs();
+        }
+
+        utils.showMessage('数据已刷新');
     }
 };
 

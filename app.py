@@ -352,6 +352,11 @@ def create_ai_config():
     """创建AI配置"""
     data = request.json
 
+    # 检查配置名称是否已存在
+    existing_config = AIConfig.query.filter_by(name=data.get('name')).first()
+    if existing_config:
+        return jsonify({'error': '配置名称已存在，请使用其他名称'}), 400
+
     # 如果设置为激活，先取消其他配置的激活状态
     if data.get('is_active', False):
         AIConfig.query.update({'is_active': False})
