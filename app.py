@@ -403,6 +403,52 @@ def init_db():
             app.db_initialized = True
 
 
+# ==================== 恢复未完成的小说生成 ====================
+
+def resume_unfinished_novels():
+    """启动时恢复所有未完成的小说生成任务"""
+    with app.app_context():
+        # 查找所有状态为 'generating' 的小说
+        unfinished_novels = Novel.query.filter_by(status='generating').all()
+
+        if unfinished_novels:
+            print(f"\n{'='*60}")
+            print(f"🔄 发现 {len(unfinished_novels)} 个未完成的小说任务，正在恢复...")
+            print(f"{'='*60}\n")
+
+            for novel in unfinished_novels:
+                print(f"📚 恢复小说: {novel.title or '未命名小说'} (ID: {novel.id})")
+                print(f"   当前阶段: {novel.current_stage}")
+                print(f"   创建时间: {novel.created_at}")
+
+                # 在后台线程中继续生成
+                def generate(novel_id=novel.id):
+                    with app.app_context():
+                        try:
+                            novel_generator.generate_novel(novel_id)
+                            print(f"✅ 小说 ID:{novel_id} 生成完成")
+                        except Exception as e:
+                            print(f"❌ 小说 ID:{novel_id} 生成失败: {str(e)}")
+
+                thread = threading.Thread(target=generate)
+                thread.daemon = True
+                thread.start()
+
+            print(f"\n{'='*60}")
+            print(f"✅ 所有未完成任务已启动恢复")
+            print(f"{'='*60}\n")
+        else:
+            print("\n✓ 没有未完成的小说任务\n")
+
+
 if __name__ == '__main__':
+    # 初始化数据库
+    with app.app_context():
+        db.create_all()
+
+    # 恢复未完成的小说生成任务
+    resume_unfinished_novels()
+
+    # 启动Flask应用
     port = int(Config.SECRET_KEY) if hasattr(Config, 'FLASK_PORT') else 5000
     app.run(host='0.0.0.0', port=5000, debug=True)
