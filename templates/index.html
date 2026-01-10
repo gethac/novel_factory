@@ -16,12 +16,17 @@
         </div>
 
         <!-- 导航标签 -->
-        <div class="nav-tabs">
+        <div class="nav-tabs" style="position: relative;">
             <button class="nav-tab active" onclick="app.switchTab('dashboard', event)">仪表盘</button>
             <button class="nav-tab" onclick="app.switchTab('create', event)">创建小说</button>
             <button class="nav-tab" onclick="app.switchTab('novels', event)">小说列表</button>
             <button class="nav-tab" onclick="app.switchTab('tokens', event)">Token统计</button>
             <button class="nav-tab" onclick="app.switchTab('settings', event)">AI配置</button>
+            <button class="btn btn-secondary" onclick="app.refreshCurrentTab()"
+                    style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); padding: 8px 16px; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 16px;">🔄</span>
+                <span>刷新</span>
+            </button>
         </div>
 
         <!-- 仪表盘 -->
